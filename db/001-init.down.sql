@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS round_payments CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS mature_mining_rewards CASCADE;
+DROP TABLE IF EXISTS immature_mining_rewards CASCADE;
+DROP TABLE IF EXISTS token_events CASCADE;
+DROP TABLE IF EXISTS watcher_blocks CASCADE;
+
