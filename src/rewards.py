@@ -8,11 +8,11 @@ class ShareMining(SyncerInterface):
     def __init__(self, begin_block, end_block, reward_per_block, share_token_address, round):
         pass
 
-    def sync(block_number, block_hash, db_session):
+    def sync(watcher_id, block_number, block_hash, db_session):
         """Sync data"""
         pass
 
 
-    def rollback(block_number, db_session):
+    def rollback(watcher_id, block_number, db_session):
         """delete data after block_number"""
         pass

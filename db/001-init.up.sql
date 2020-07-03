@@ -80,15 +80,15 @@ CREATE TABLE payment_transactions (
     trasaction_nonce INT NOT NULL,
     transaction_data TEXT NOT NULL,
     transaction_hash TEXT,
-    status TEXT
+    status TEXT NOT NULL
 );
 
 CREATE TABLE payments (
     id SERIAL PRIMARY KEY,
-    holder TEXT,
+    holder TEXT NOT NULL,
     amount numeric(78,18) NOT NULL,
     pay_time TIMESTAMP NOT NULL,
-    transaction_id INT,
+    transaction_id INT NOT NULL,
     FOREIGN KEY (transaction_id) REFERENCES payment_transactions (id)
 );
 
@@ -99,12 +99,17 @@ CREATE MATERIALIZED VIEW payment_summaries AS
   FROM payments
   GROUP BY holder;
 
+
+CREATE UNIQUE INDEX idx_payment_summaries_holder
+  ON payment_summaries (holder);
+
+
 CREATE TABLE round_payments (
     id SERIAL PRIMARY KEY,
-    mining_round TEXT,
-    holder TEXT,
+    mining_round TEXT NOT NULL,
+    holder TEXT NOT NULL,
     amount numeric(78,18) NOT NULL,
-    payment_id INT,
+    payment_id INT NOT NULL,
     FOREIGN KEY (payment_id) REFERENCES payments (id)
 );
 
@@ -115,3 +120,6 @@ CREATE MATERIALIZED VIEW round_payment_summaries AS
     SUM(amount) AS paid_amount
   FROM round_payments 
   GROUP BY mining_round, holder;
+
+CREATE UNIQUE INDEX idx_round_payment_summaries_mining_round_holder
+  ON round_payment_summaries (mining_round, holder);
