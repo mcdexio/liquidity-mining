@@ -1,0 +1,46 @@
+# eth node rpc request
+[rpc]
+host = "localhost"
+port = 8545
+timeout = 10
+
+[gas]
+gas_level = "fast"
+eth_gas_url = "https://ethgasstation.info/json/ethgasAPI.json"
+
+# accounts for payer
+[[accounts]]
+address = ""
+private_key = ""
+
+#[[accounts]]
+#address = ""
+# private_key = ""
+
+[contracts]
+MCB_token = "0x0000000000000000000000000000000000000000"
+
+[logging]
+version = 1
+disable_existing_loggers = true
+[logging.formatters]
+    [logging.formatters.simple]
+    format= '%(asctime)s %(levelname)-7s - %(message)s - [%(filename)s:%(lineno)d:%(funcName)s]'
+
+[logging.handlers]
+    [logging.handlers.console]
+    class = "logging.StreamHandler"
+    level = "INFO"
+    formatter = 'simple'
+    stream = "ext://sys.stdout"
+    [logging.handlers.file_handler]
+    class = "logging.handlers.RotatingFileHandler"
+    level = "DEBUG"
+    formatter = 'simple'
+    filename = "./log/keeper.log"
+    maxBytes = 104857600 # 100MB
+    backupCount = 2
+    encoding = "utf8"
+[logging.root]
+level= "DEBUG"
+handlers= ["console", "file_handler"]

@@ -6,6 +6,8 @@ CREATE TABLE mining_rounds(
   round TEXT PRIMARY KEY,
   begin_block_number INT NOT NULL,
   end_block_number INT NOT NULL,
+  supply INT NOT NULL,
+  release_per_block INT NOT NULL,
   watcher_id INT NOT NULL
 );
 
