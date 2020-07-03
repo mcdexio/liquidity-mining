@@ -3,19 +3,20 @@
 */
 
 CREATE TABLE watcher_blocks (
+    watcher_id INT,
     block_number INT,
     block_hash TEXT NOT NULL,
-    PRIMARY KEY(block_number)
+    PRIMARY KEY(watcher_id, block_number)
 );
 
 CREATE TABLE token_events (
     block_number INT,
     transaction_hash TEXT,
     event_index INT,
-    token TEXT,
-    holder TEXT,
+    token TEXT NOT NULL,
+    holder TEXT NOT NULL,
     amount numeric(78,18) NOT NULL,   /* positive or negative */
-    PRIMARY KEY(block_number, transaction_hash, event_index, token, holder)
+    PRIMARY KEY(block_number, transaction_hash, event_index),
 );
 
 CREATE MATERIALIZED VIEW token_balances AS
@@ -51,8 +52,17 @@ CREATE UNIQUE INDEX idx_immature_mining_reward_summaries_mining_round_holder
 CREATE TABLE mature_mining_rewards (
     mining_round TEXT,
     holder TEXT,
+    block_number INT NOT NULL,
     mcb_balance numeric(78,18) NOT NULL,
     PRIMARY KEY(mining_round, holder)
+);
+
+CREATE TABLE mature_mining_reward_checkpoints (
+    mining_round TEXT,
+    block_number INT,
+    holder TEXT,
+    mcb_balance numeric(78,18) NOT NULL,
+    PRIMARY KEY(mining_round, block_number, holder)
 );
 
 CREATE TABLE payments (
