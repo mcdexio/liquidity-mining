@@ -5,8 +5,8 @@ from lib.address import Address
 from lib.wad import Wad
 
 
-class MCBToken(Contract):
-    abi = Contract._load_abi(__name__, '../abi/MCBToken.abi')
+class ERC20Token(Contract):
+    abi = Contract._load_abi(__name__, '../abi/ERC20Token.abi')
     registry = {}
 
     def __init__(self, web3: Web3, address: Address):

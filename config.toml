@@ -18,6 +18,7 @@ private_key = ""
 # private_key = ""
 
 [contracts]
+disperse = "0xD152f549545093347A162Dce210e7293f1452150"
 MCB_token = "0x0000000000000000000000000000000000000000"
 
 [logging]
