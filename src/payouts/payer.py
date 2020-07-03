@@ -8,16 +8,13 @@ import requests
 import threading
 
 from web3 import Web3, HTTPProvider, middleware
-import eth_utils
-from eth_utils import encode_hex
 from eth_account import Account
 from web3.middleware import construct_sign_and_send_raw_middleware, geth_poa_middleware
 
 
 from lib.address import Address
 from lib.wad import Wad
-from watcher import Watcher
-from contract.MCB_token import MCBToken
+from contract.ERC20Token import ERC20Token
 
 class Payer:
     logger = logging.getLogger()
@@ -40,7 +37,7 @@ class Payer:
         self.set_gas_info()
 
         # contract 
-        self.token = MCBToken(web3=self.web3, address=Address(self.config['contracts']['MCB_token']))
+        self.MCBToken = ERC20Token(web3=self.web3, address=Address(self.config['contracts']['MCB_token']))
 
     def set_gas_info(self):
         if self.web3 is None or self.config.get('gas', None) is None:
