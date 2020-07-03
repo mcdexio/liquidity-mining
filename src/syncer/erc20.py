@@ -1,4 +1,4 @@
-from watcher import SyncerInterface
+from .syncer import SyncerInterface
 
 class ERC20Tracer(SyncerInterface):
     """Sync the balance of ERC20 tokens by parsing the ERC20 events"""

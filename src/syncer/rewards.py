@@ -1,4 +1,4 @@
-from watcher import SyncerInterface 
+from .syncer import SyncerInterface 
 
 class ShareMining(SyncerInterface):
     """Mining according to the balance of the share token.
