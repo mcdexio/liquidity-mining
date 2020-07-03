@@ -2,6 +2,13 @@
     PosgreSQL tables
 */
 
+CREATE TABLE mining_rounds(
+  round TEXT PRIMARY KEY,
+  begin_block_number INT NOT NULL,
+  end_block_number INT NOT NULL,
+  watcher_id INT NOT NULL
+);
+
 CREATE TABLE watcher_blocks (
     watcher_id INT,
     block_number INT,
@@ -16,16 +23,19 @@ CREATE TABLE token_events (
     token TEXT NOT NULL,
     holder TEXT NOT NULL,
     amount numeric(78,18) NOT NULL,   /* positive or negative */
-    PRIMARY KEY(block_number, transaction_hash, event_index),
+    watcher_id INT NOT NULL,
+    PRIMARY KEY(block_number, transaction_hash, event_index, token, holder)
 );
+
 
 CREATE MATERIALIZED VIEW token_balances AS
   SELECT
+    watcher_id,
     token,
     holder,
     SUM(amount) AS balance
   FROM token_events
-  GROUP BY token, holder;
+  GROUP BY watcher_id, token, holder;
 
 CREATE UNIQUE INDEX idx_token_balances_token_holder
   ON token_balances(token, holder);
@@ -65,13 +75,21 @@ CREATE TABLE mature_mining_reward_checkpoints (
     PRIMARY KEY(mining_round, block_number, holder)
 );
 
+CREATE TABLE payment_transactions (
+    id SERIAL PRIMARY KEY,
+    trasaction_nonce INT NOT NULL,
+    transaction_data TEXT NOT NULL,
+    transaction_hash TEXT,
+    status TEXT
+);
+
 CREATE TABLE payments (
     id SERIAL PRIMARY KEY,
     holder TEXT,
     amount numeric(78,18) NOT NULL,
     pay_time TIMESTAMP NOT NULL,
-    trasaction_nonce INT NOT NULL,
-    transaction_hash TEXT
+    transaction_id INT,
+    FOREIGN KEY (transaction_id) REFERENCES payment_transactions (id)
 );
 
 CREATE MATERIALIZED VIEW payment_summaries AS
