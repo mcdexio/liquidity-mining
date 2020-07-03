@@ -7,12 +7,12 @@ class ERC20Tracer(SyncerInterface):
         self._token_address = token_address
         
 
-    def sync(watcher_id, block_number, block_hash, db_session):
+    def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
         pass
 
 
-    def rollback(watcher_id, block_number, db_session):
+    def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
         pass
 

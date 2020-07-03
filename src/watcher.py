@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 class SyncerInterface:
     """A pure interface for the watcher's plugins.
     """
-    def sync(watcher_id, block_number, block_hash, db_session):
+    def sync(self, watcher_id, block_number, block_hash, db_session):
         """sync with a specific block
 
         The Watcher syncs data in order. Watcher is responsible for maintaining the state of the database sesion.
@@ -19,7 +19,7 @@ class SyncerInterface:
         """
         pass
 
-    def rollback(watcher_id, block_number, db_session):
+    def rollback(self, watcher_id, block_number, db_session):
         """rollback the data of some block
 
         The Syncer should delete all data after the `block_number`.
