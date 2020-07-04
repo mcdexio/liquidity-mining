@@ -9,7 +9,7 @@ Base = declarative_base()
 
 
 class MiningRound(Base):
-    __tablename__ = 'users'
+    __tablename__ = 'mining_rounds'
 
     round = Column(String, primary_key=True)
     begin_block_number = Column(Integer)
