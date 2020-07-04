@@ -1,8 +1,8 @@
 import datetime
 import json
 import logging
-import logging.config
 import requests
+import math
 from decimal import Decimal
 from sqlalchemy import desc
 
@@ -171,7 +171,8 @@ class Payer:
         
         # get all miners unpaid rewards
         unpaid_rewards = self._get_miner_unpaid_reward()
-        if len(unpaid_rewards["miners"]) == 0:
+        miners_count = len(unpaid_rewards["miners"])
+        if miners_count == 0:
             self.logger.info(f"no miner need to be payed")
             return
 
@@ -179,20 +180,27 @@ class Payer:
         self._get_gas_price()
         self.nonce = self.nonce+1
         # send MCB to all accounts
-        try:
-            tx_hash = self.disperse.disperse_token(self.MCBToken.address, unpaid_rewards["miners"], unpaid_rewards["amounts"],
-                config.PAYER_ADDRESS, self.nonce, self.gas_price)
-            self._save_payment_transaction(tx_hash, unpaid_rewards["miners"], unpaid_rewards["amounts"])
-        except Exception as e:
-            self.logger.fatal(f"disperse transaction fail! Exception:{e}")
-            return
+        for i in range(math.ceil(miners_count/config.MAX_PATCH_NUM)):
+            start_idx = i*config.MAX_PATCH_NUM
+            end_idx = min((i+1)*config.MAX_PATCH_NUM, miners_count)
+            self.logger.info(f"miners count: {miners_count}, send from {start_idx} to {end_idx}")
 
-        try:
-            tx_receipt = self.web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.WAIT_TIMEOUT)
-            self._save_payments_info(tx_receipt, unpaid_rewards["miners"], unpaid_rewards["amounts"])
-        except Exception as e:
-            self.logger.fatal(
-                f"get trasaction receipt fail! tx_hash:{tx_hash}, err:{e}")
-            return
+            miners = unpaid_rewards["miners"][start_idx:end_idx]
+            amounts = unpaid_rewards["amounts"][start_idx:end_idx]
+            try:
+                tx_hash = self.disperse.disperse_token(self.MCBToken.address, miners, amounts,
+                    config.PAYER_ADDRESS, self.nonce, self.gas_price)
+                self._save_payment_transaction(tx_hash, miners, amounts)
+            except Exception as e:
+                self.logger.fatal(f"disperse transaction fail! Exception:{e}")
+                continue
+
+            try:
+                tx_receipt = self.web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.WAIT_TIMEOUT)
+                self._save_payments_info(tx_receipt, miners, amounts)
+            except Exception as e:
+                self.logger.fatal(
+                    f"get trasaction receipt fail! tx_hash:{tx_hash}, err:{e}")
+                continue
 
         return
