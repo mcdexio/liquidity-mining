@@ -5,7 +5,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from orm import Watcher as DBWatcher, WatcherBlock
 from typing import List
-from syncer import SyncerInterface
+from syncer.types import SyncerInterface
 import logging
 import traceback
 
