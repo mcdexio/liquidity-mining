@@ -30,6 +30,7 @@ class ERC20Tracer(SyncerInterface):
             amount = -amount
         token_event.amount = amount
         db_session.add(token_event)
+        db_session.execute("refresh materialized view token_balances")
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
@@ -41,7 +42,7 @@ class ERC20Tracer(SyncerInterface):
             transfer_info = row.args
             from_addr = transfer_info.get('from')
             to_addr = transfer_info.get('to')
-            amount = int(Wad(transfer_info.get('value')))
+            amount = Wad(transfer_info.get('value'))
             cur_block_number = row.blockNumber
             cur_block_hash = row.blockHash
             event_index = row.logIndex
@@ -71,3 +72,4 @@ class ERC20Tracer(SyncerInterface):
         """delete data after block_number"""
         db_session.query(TokenEvent).filter(TokenEvent.token == self._token_address).filter(TokenEvent.watcher_id == watcher_id).\
             filter(TokenEvent.block_number >= block_number).delete()
+        db_session.execute("refresh materialized view token_balances")        

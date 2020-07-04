@@ -93,6 +93,7 @@ class MatureCheck(SyncerInterface):
                 mature_mining_reward.mcb_balance = item.amount
 
             db_session.add(mature_mining_reward)
+            db_session.execute("refresh materialized view immature_mining_reward_summaries")
 
         # save checkpoint
         checkpoint_latest_block_number = self._get_mature_mining_reward_checkpoint_latest_block_number(
