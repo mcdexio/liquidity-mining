@@ -3,7 +3,7 @@ from web3 import Web3
 from web3.types import BlockData
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
-from orm import Watcher as DBWatcher, WatcherBlock
+from model.orm import Watcher as DBWatcher, WatcherBlock
 from typing import List
 from syncer.types import SyncerInterface
 import logging
@@ -17,7 +17,7 @@ class Watcher:
         data of the blockchain.
     """
 
-    def __init__(self, watcher_id: int, syncers: List[SyncerInterface], web3: Web3, dbEngine: Engine):
+    def __init__(self, watcher_id: int, syncers: List[SyncerInterface], web3: Web3, db_engine: Engine):
         """initializer of Watcher
 
         Args:
@@ -27,7 +27,7 @@ class Watcher:
         self._watcher_id = watcher_id
         self._syncers = syncers
         self._web3 = web3
-        self._Session = sessionmaker(bind=dbEngine, autoflush=False)
+        self._Session = sessionmaker(bind=db_engine)
         self._logger = logging.getLogger('watcher')
 
     def sync(self) -> int:

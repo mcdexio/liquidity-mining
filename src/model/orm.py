@@ -1,10 +1,13 @@
 from sqlalchemy import Column, Integer, String, DECIMAL, TIMESTAMP, ForeignKey, Table
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from .init_db import engine
 
 Base = declarative_base()
-DBSession = sessionmaker(bind=engine)
+
+# DB_ENGINE = 
+# DB_SESSION = 
+
+
 
 class MiningRound(Base):
     __tablename__ = 'users'

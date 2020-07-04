@@ -1,7 +1,7 @@
 from web3 import Web3
 
 from .types import SyncerInterface
-from orm import TokenEvent
+from model.orm import TokenEvent
 
 from lib.address import Address
 from lib.wad import Wad

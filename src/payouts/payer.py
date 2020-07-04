@@ -8,6 +8,7 @@ import requests
 import threading
 
 from sqlalchemy import desc
+from sqlalchemy.orm import sessionmaker
 
 from web3 import Web3, HTTPProvider
 from eth_account import Account
@@ -19,7 +20,7 @@ from lib.wad import Wad
 from model.db import connect_db
 from contract.disperse import Disperse
 from contract.erc20 import ERC20Token
-from model import model
+from model import orm
 
 class Payer:
     logger = logging.getLogger()
@@ -41,7 +42,8 @@ class Payer:
         self.set_gas_info()
         self.nonce = 0
         # connect db
-        connect_db(self.config['db'])
+        db_engine = connect_db(self.config['db'])
+        self.DBSession = sessionmaker(bind=db_engine)
         # init payer transaction nonce
         self.init_payer_nonce()
 
@@ -70,7 +72,7 @@ class Payer:
             self.logger.fatal(f"get gas price error {e}")
 
     def init_payer_nonce(self):
-        latest_transaction = model.Session.query(model.PaymentTransaction).order_by(desc(model.PaymentTransaction.transaction_nonce)).first()
+        latest_transaction = model.Session.query(orm.PaymentTransaction).order_by(desc(orm.PaymentTransaction.transaction_nonce)).first()
         if latest_transaction is None:
             count = self.web3.eth.eth_getTransactionCount(self.payer_account.address)
             self.nonce = count+1
@@ -99,10 +101,10 @@ class Payer:
         return True
 
     def check_pending_transactions(self) -> bool:
-        stats = [model.PaymentTransaction.INIT, model.PaymentTransaction.PENDING]
+        stats = [orm.PaymentTransaction.INIT, orm.PaymentTransaction.PENDING]
 
-        pending_transactions = model.Session.query(model.PaymentTransaction)\
-            .filter(model.PaymentTransaction.status.in_(stats)).all()
+        pending_transactions = model.Session.query(orm.PaymentTransaction)\
+            .filter(orm.PaymentTransaction.status.in_(stats)).all()
         for transaction in pending_transactions:
             try:
                 self.web3.eth.waitForTransactionReceipt(transaction.transaction_hash, timeout=self.config['rpc']['wait_timeout'])
@@ -113,7 +115,7 @@ class Payer:
         return True
 
     def save_payment_transaction(self, tx_hash, miners, amounts):
-        pt = model.PaymentTransaction()
+        pt = orm.PaymentTransaction()
         pt.transaction_nonce = self.nonce
         data = {
             "miners": miners,
@@ -127,13 +129,13 @@ class Payer:
 
     def save_payments_info(self, tx_receipt, miners, amounts):
         # update transaction status
-        pt = model.Session.query(model.PaymentTransaction)\
+        pt = model.Session.query(orm.PaymentTransaction)\
             .filter_by(transaction_hash = tx_receipt["transactionHash"]).first()
         pt.transaction_status(tx_receipt["status"])
         model.Session.add(pt)
 
         # save payments
-        if pt.status == model.PaymentTransaction.SUCCESS:
+        if pt.status == orm.PaymentTransaction.SUCCESS:
             for i in range(len(miners)):
                 p = model.Payment()
                 p.holder = miners[i]
@@ -143,7 +145,7 @@ class Payer:
                 model.Session.add(p)
                 model.Session.execute("refresh materialized view payment_summaries")
 
-                rp = model.RoundPayment()
+                rp = orm.RoundPayment()
                 rp.mining_round = self.config["mining"]["round"]
                 rp.holder = miners[i]
                 rp.amount = amounts[i]
@@ -160,7 +162,7 @@ class Payer:
             return
         
         # get all miners mature_mining_rewards
-        miner_rewards = model.Session.query(model.PaymentSummary).all()
+        miner_rewards = model.Session.query(orm.PaymentSummary).all()
         if len(miner_rewards) == 0:
             self.logger.info(f"no miner need to be payed")
             return
