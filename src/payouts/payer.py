@@ -16,7 +16,7 @@ from web3.middleware import construct_sign_and_send_raw_middleware, geth_poa_mid
 
 from lib.address import Address
 from lib.wad import Wad
-from model.init_db import init_db
+from model.db import connect_db
 from contract.disperse import Disperse
 from contract.erc20 import ERC20Token
 from model import model
@@ -40,8 +40,8 @@ class Payer:
         self.eth_gas_url = ''
         self.set_gas_info()
         self.nonce = 0
-        # init db
-        init_db(self.config['db'])
+        # connect db
+        connect_db(self.config['db'])
         # init payer transaction nonce
         self.init_payer_nonce()
 

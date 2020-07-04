@@ -5,7 +5,6 @@ from .init_db import engine
 
 Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
-Session = DBSession()
 
 class MiningRound(Base):
     __tablename__ = 'users'
