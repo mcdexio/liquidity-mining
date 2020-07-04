@@ -5,7 +5,6 @@ from .db import db_engine
 
 Base = declarative_base()
 
-DB_SESSION = sessionmaker(bind=db_engine)
 
 
 class MiningRound(Base):
@@ -77,17 +76,17 @@ class ImmatureMiningRewardSummary(Base):
 class MatureMiningReward(Base):
     __tablename__ = "mature_mining_reward"
 
-    mining_round = Column(String)
-    holder = Column(String)
+    mining_round = Column(String, primary_key=True)
+    holder = Column(String, primary_key=True)
     block_number = Column(Integer)
     mcb_balance = Column(DECIMAL(78, 18))
 
 
 class MatureMiningRewardCheckpoint(Base):
     __tablename__ = "mature_mining_reward_checkpoints"
-    mining_round = Column(String)
-    holder = Column(String)
-    block_number = Column(Integer)
+    mining_round = Column(String, primary_key=True)
+    holder = Column(String, primary_key=True)
+    block_number = Column(Integer, primary_key=True)
     mcb_balance = Column(DECIMAL(78, 18))
 
 
@@ -105,6 +104,8 @@ class PaymentTransaction(Base):
     transaction_hash = Column(String, nullable=True)
     status = Column(String, nullable=True)
 
+    payments = relationship("Payment")
+
     def transaction_status(self, code):
         status = [self.INIT, self.PENDING, self.SUCCESS, self.FAILED, self.CANCELED]
         self.status = status[code]
@@ -119,7 +120,7 @@ class Payment(Base):
     transaction_id = Column(Integer, ForeignKey('payment_transactions.id'))
     payment_transaction = relationship(
         "PaymentTransaction", back_populates="payments")
-
+    round_payments = relationship('RoundPayment')
 
 class PaymentSummary(Base):
     __table__ = Table("payment_summaries", Base.metadata, autoload=True, autoload_with=db_engine)

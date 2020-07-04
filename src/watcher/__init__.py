@@ -1,3 +1,3 @@
-from watcher import Watcher
+from .watcher import Watcher
 
 __all__ = ['Watcher']
