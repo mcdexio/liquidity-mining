@@ -161,7 +161,7 @@ class Payer:
             unpaid = item.mcb_balance - item.paid_amount
             if unpaid > Decimal(0):
                 result["miners"].append(item.holder)
-                result["amounts"].append(Wad(unpaid))
+                result["amounts"].append(unpaid)
         return result
 
     def run(self):

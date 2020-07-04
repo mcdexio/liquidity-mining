@@ -19,19 +19,24 @@ class Disperse(Contract):
 
     def disperse_ether(self, addresses: list, amounts: list, user: Address, nonce:int, gasPrice: int):
         total_amount = 0
+        amounts_toWei = []
         for amount in amounts:
-            total_amount += amount
-        total_amount_towei = self.web3.toWei(total_amount, 'ether')
+            amount_toWei = self.web3.toWei(amount, 'ether')
+            amounts_toWei.append(amount_toWei)
+            total_amount += amount_toWei
         tx_hash = self.contract.functions.disperseEther(addresses, amounts).transact({
             'from': user.address,
-            'value': self.web3.toHex(total_amount_towei),
+            'value': self.web3.toHex(total_amount),
             'gasPrice': gasPrice,
             'nonce': nonce
         })
         return tx_hash
 
     def disperse_token(self, token: Address, addresses: list, amounts: list, user: Address, nonce: int, gasPrice: int):
-        tx_hash = self.contract.functions.disperseToken(token.address, addresses, amounts).transact({
+        amounts_toWad = []
+        for amount in amounts:
+            amounts_toWad.append(Wad.from_number(amount))
+        tx_hash = self.contract.functions.disperseToken(token.address, addresses, amounts_toWad).transact({
             'from': user.address,
             'gasPrice': gasPrice,
             'nonce': nonce
