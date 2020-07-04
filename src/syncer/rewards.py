@@ -45,8 +45,7 @@ class ShareMining(SyncerInterface):
         for item in items:
             holder = item.holder
             holder_share_token_amount = Wad(item.amount)
-            reward = self.reward_per_block * \
-                (holder_share_token_amount / total_share_token_amount)
+            reward = self.reward_per_block * holder_share_token_amount / total_share_token_amount
 
             immature_mining_reward = ImmatureMiningReward()
             immature_mining_reward.block_number = block_number
