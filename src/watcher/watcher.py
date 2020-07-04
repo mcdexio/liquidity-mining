@@ -66,7 +66,7 @@ class Watcher:
         except Exception as e:
             result = 0
             self._logger.warning('sync exception:%s',
-                                 traceback.format_exception(e))
+                                 traceback.format_exc())
         finally:
             db_session.rollback()
         return result
@@ -94,7 +94,7 @@ class Watcher:
             db_session.commit()
         except Exception as e:
             self._logger.warning('sync exception:%s',
-                                 traceback.format_exception(e))
+                                 traceback.format_exc())
         finally:
             db_session.rollback()
         return result

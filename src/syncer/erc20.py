@@ -35,7 +35,7 @@ class ERC20Tracer(SyncerInterface):
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
 
-        transfer_filter = self._erc20_token.events.Transfer().createFilter(
+        transfer_filter = self._erc20_token.contract.events.Transfer().createFilter(
             fromBlock=Web3.toHex(block_number), toBlock=Web3.toHex(block_number))
         all_filter_events = transfer_filter.get_all_entries()
         for row in all_filter_events:
