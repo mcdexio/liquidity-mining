@@ -7,7 +7,7 @@ WAIT_TIMEOUT = 600
 MINING_ROUND = "XIA"
 
 # db
-DB_URL = ""
+DB_URL = "postgres://postgres:postgres@localhost/postgres?sslmode=disable"
 DB_ECHO = True
 
 # gas price

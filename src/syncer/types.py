@@ -18,7 +18,7 @@ class SyncerInterface:
         """
         pass
 
-    def rollback(self, watcher_id:int, block_number:int, db_session):
+    def rollback(self, watcher_id: int, block_number: int, db_session):
         """rollback the data of some block
 
         The Syncer should delete all data after the `block_number`.

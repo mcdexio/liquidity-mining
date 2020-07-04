@@ -1,21 +1,22 @@
 from web3 import Web3
 
-from .types import SyncerInterface
-from model.orm import TokenEvent
-
+from contract.erc20 import ERC20Token
 from lib.address import Address
 from lib.wad import Wad
-from contract.erc20 import ERC20Token
+from model.orm import TokenEvent
+
+from .types import SyncerInterface
 
 
 class ERC20Tracer(SyncerInterface):
     """Sync the balance of ERC20 tokens by parsing the ERC20 events"""
-    
+
     def __init__(self, token_address, web3):
         self._token_address = token_address.lower()
         self._web3 = web3
-        # contract 
-        self._erc20_token = ERC20Token(web3=web3, address=Address(token_address))
+        # contract
+        self._erc20_token = ERC20Token(
+            web3=web3, address=Address(token_address))
 
     def _add_token_event(self, watcher_id, block_number, block_hash, token_address, event_index, transfer_type, holder, amount, db_session):
         token_event = TokenEvent()
@@ -32,7 +33,7 @@ class ERC20Tracer(SyncerInterface):
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
-        
+
         transfer_filter = self._erc20_token.events.Transfer().createFilter(
             fromBlock=Web3.toHex(block_number), toBlock=Web3.toHex(block_number))
         all_filter_events = transfer_filter.get_all_entries()
@@ -42,31 +43,31 @@ class ERC20Tracer(SyncerInterface):
             to_addr = transfer_info.get('to')
             amount = int(Wad(transfer_info.get('value')))
             cur_block_number = row.blockNumber
-            cur_block_hash =  row.blockHash
+            cur_block_hash = row.blockHash
             event_index = row.logIndex
 
             if from_addr == '0x0000000000000000000000000000000000000000':
                 transfer_type = 'to'
                 holder = to_addr
-                self._add_token_event(watcher_id, cur_block_number, cur_block_hash, self._token_address, event_index, transfer_type, holder, amount, db_session)
+                self._add_token_event(watcher_id, cur_block_number, cur_block_hash,
+                                      self._token_address, event_index, transfer_type, holder, amount, db_session)
             elif to_addr == '0x0000000000000000000000000000000000000000':
                 transfer_type = 'from'
                 holder = from_addr
-                self._add_token_event(watcher_id, cur_block_number, cur_block_hash, self._token_address, event_index, transfer_type, holder, amount, db_session)
+                self._add_token_event(watcher_id, cur_block_number, cur_block_hash,
+                                      self._token_address, event_index, transfer_type, holder, amount, db_session)
             else:
                 transfer_type = 'from'
                 holder = from_addr
-                self._add_token_event(watcher_id, cur_block_number, cur_block_hash, self._token_address, event_index, transfer_type, holder, amount, db_session)
+                self._add_token_event(watcher_id, cur_block_number, cur_block_hash,
+                                      self._token_address, event_index, transfer_type, holder, amount, db_session)
 
                 transfer_type = 'to'
                 holder = to_addr
-                self._add_token_event(watcher_id, cur_block_number, cur_block_hash, self._token_address, event_index, transfer_type, holder, amount, db_session)
+                self._add_token_event(watcher_id, cur_block_number, cur_block_hash,
+                                      self._token_address, event_index, transfer_type, holder, amount, db_session)
 
     def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
-        db_session.query(TokenEvent).filter(TokenEvent.token ==  self._token_address).filter(TokenEvent.watcher_id == watcher_id).\
+        db_session.query(TokenEvent).filter(TokenEvent.token == self._token_address).filter(TokenEvent.watcher_id == watcher_id).\
             filter(TokenEvent.block_number >= block_number).delete()
-
-
-    
-

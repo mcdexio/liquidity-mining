@@ -1,25 +1,27 @@
 import argparse
+import datetime
+import json
 import logging
 import logging.config
-import datetime
-import toml
-import json
-import requests
 import threading
 
+import requests
+import toml
+from eth_account import Account
 from sqlalchemy import desc
 from sqlalchemy.orm import sessionmaker
-
-from web3 import Web3, HTTPProvider
-from eth_account import Account
-from web3.middleware import construct_sign_and_send_raw_middleware, geth_poa_middleware
+from web3 import HTTPProvider, Web3
+from web3.middleware import (construct_sign_and_send_raw_middleware,
+                             geth_poa_middleware)
 
 import config
-from lib.address import Address
-from lib.wad import Wad
 from contract.disperse import Disperse
 from contract.erc20 import ERC20Token
-from model.orm import DB_SESSION, PaymentTransaction, Payment, RoundPayment, PaymentSummary
+from lib.address import Address
+from lib.wad import Wad
+from model.db import DBSession
+from model.orm import Payment, PaymentSummary, PaymentTransaction, RoundPayment
+
 
 class Payer:
     logger = logging.getLogger("payer")
@@ -35,23 +37,27 @@ class Payer:
         # init payer transaction nonce
         self.init_payer_nonce()
 
-        # contract 
-        self.disperse = Disperse(web3=self.web3, address=Address(config.DISPERSE_ADDRESS))
-        self.MCBToken = ERC20Token(web3=self.web3, address=Address(config.MCB_TOKEN_ADDRESS))
+        # contract
+        self.disperse = Disperse(
+            web3=self.web3, address=Address(config.DISPERSE_ADDRESS))
+        self.MCBToken = ERC20Token(
+            web3=self.web3, address=Address(config.MCB_TOKEN_ADDRESS))
 
     def get_gas_price(self):
         try:
             resp = requests.get(config.ETH_GAS_URL, timeout=5)
             if resp.status_code / 100 == 2:
                 rsp = json.loads(resp.content)
-                self.gas_price = self.web3.toWei(rsp.get(config.GAS_LEVEL) / 10, "gwei")
+                self.gas_price = self.web3.toWei(
+                    rsp.get(config.GAS_LEVEL) / 10, "gwei")
                 self.logger.info(f"new gas price: {self.gas_price}")
         except Exception as e:
             self.logger.fatal(f"get gas price error {e}")
 
     def init_payer_nonce(self):
-        db_session = DB_SESSION()
-        latest_transaction = db_session.query(PaymentTransaction).order_by(desc(PaymentTransaction.transaction_nonce)).first()
+        db_session = DBSession()
+        latest_transaction = db_session.query(PaymentTransaction).order_by(
+            desc(PaymentTransaction.transaction_nonce)).first()
         if latest_transaction is None:
             count = self.web3.eth.eth_getTransactionCount(config.PAYER_ADDRESS)
             self.nonce = count+1
@@ -62,7 +68,8 @@ class Payer:
         try:
             account = Account()
             acct = account.from_key(config.PAYER_KEY)
-            self.web3.middleware_onion.add(construct_sign_and_send_raw_middleware(acct))
+            self.web3.middleware_onion.add(
+                construct_sign_and_send_raw_middleware(acct))
         except:
             self.logger.fatal(f"Account {config.PAYER_KEY} register key error")
             return False
@@ -71,20 +78,22 @@ class Payer:
     def check_pending_transactions(self) -> bool:
         stats = [PaymentTransaction.INIT, PaymentTransaction.PENDING]
 
-        db_session = DB_SESSION()
+        db_session = DBSession()
         pending_transactions = db_session.query(PaymentTransaction)\
             .filter(PaymentTransaction.status.in_(stats)).all()
         for transaction in pending_transactions:
             try:
-                self.web3.eth.waitForTransactionReceipt(transaction.transaction_hash, timeout=config.WAIT_TIMEOUT)
+                self.web3.eth.waitForTransactionReceipt(
+                    transaction.transaction_hash, timeout=config.WAIT_TIMEOUT)
             except Exception as e:
-                self.logger.fatal(f"get trasaction fail! tx_hash:{transaction.transaction_hash}, err:{e}")
+                self.logger.fatal(
+                    f"get trasaction fail! tx_hash:{transaction.transaction_hash}, err:{e}")
                 return False
 
         return True
 
     def save_payment_transaction(self, tx_hash, miners, amounts):
-        db_session = DB_SESSION()
+        db_session = DBSession()
         try:
             pt = PaymentTransaction()
             pt.transaction_nonce = self.nonce
@@ -103,11 +112,11 @@ class Payer:
             db_session.rollback()
 
     def save_payments_info(self, tx_receipt, miners, amounts):
-        db_session = DB_SESSION()
+        db_session = DBSession()
         # update transaction status
         try:
             pt = db_session.query(PaymentTransaction)\
-                .filter_by(transaction_hash = tx_receipt["transactionHash"]).first()
+                .filter_by(transaction_hash=tx_receipt["transactionHash"]).first()
             pt.transaction_status(tx_receipt["status"])
             db_session.add(pt)
 
@@ -120,16 +129,19 @@ class Payer:
                     p.pay_time = datetime.datetime.utcnow()
                     p.transaction_id = pt.id
                     db_session.add(p)
-                    db_session.execute("refresh materialized view payment_summaries")
+                    db_session.execute(
+                        "refresh materialized view payment_summaries")
 
                     rp = RoundPayment()
                     rp.mining_round = config.MINING_ROUND
                     rp.holder = miners[i]
                     rp.amount = amounts[i]
                     rp.payment_id = p.id
-                    db_session.execute("refresh materialized view round_payment_summaries")
+                    db_session.execute(
+                        "refresh materialized view round_payment_summaries")
             else:
-                self.logger.warning(f"transaction not success! tx_receipt:{tx_receipt}")
+                self.logger.warning(
+                    f"transaction not success! tx_receipt:{tx_receipt}")
 
             db_session.commit()
         except Exception as e:
@@ -141,9 +153,9 @@ class Payer:
         # check pending transactions
         if self.check_pending_transactions() is False:
             return
-        
+
         # get all miners mature_mining_rewards
-        db_session = DB_SESSION()
+        db_session = DBSession()
         miner_rewards = db_session.query(PaymentSummary).all()
         if len(miner_rewards) == 0:
             self.logger.info(f"no miner need to be payed")
@@ -162,17 +174,19 @@ class Payer:
 
         try:
             tx_hash = self.disperse.disperse_token(self.MCBToken.address.address, miners, amounts,
-                config.PAYER_ADDRESS, self.nonce, self.gas_price)
+                                                   config.PAYER_ADDRESS, self.nonce, self.gas_price)
             self.save_payment_transaction(tx_hash, miners, amounts)
         except Exception as e:
             self.logger.fatal(f"disperse transaction fail! Exception:{e}")
             return
 
         try:
-            tx_receipt = self.web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.WAIT_TIMEOUT)
+            tx_receipt = self.web3.eth.waitForTransactionReceipt(
+                tx_hash, timeout=config.WAIT_TIMEOUT)
             self.save_payments_info(tx_receipt, miners, amounts)
         except Exception as e:
-            self.logger.fatal(f"get trasaction receipt fail! tx_hash:{tx_hash}, err:{e}")
+            self.logger.fatal(
+                f"get trasaction receipt fail! tx_hash:{tx_hash}, err:{e}")
             return
-        
+
         return

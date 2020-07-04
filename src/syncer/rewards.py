@@ -1,15 +1,13 @@
-from .types import SyncerInterface 
+from sqlalchemy import func
 from web3 import Web3
 
-from sqlalchemy import func
-
-from .syncer import SyncerInterface
-from orm import ImmatureMiningReward, TokenEvent
-
+from contract.erc20 import ERC20Token
 from lib.address import Address
 from lib.wad import Wad
+from model.orm import ImmatureMiningReward, TokenEvent
 from watcher import Watcher
-from contract.ERC20Token import ERC20Token
+
+from .types import SyncerInterface
 
 
 class ShareMining(SyncerInterface):
@@ -17,6 +15,7 @@ class ShareMining(SyncerInterface):
 
     reward_i = reward_per_block * (share_token_balance_i / (share_token_total_supply) )
     """
+
     def __init__(self, begin_block, end_block, reward_per_block, share_token_address, mining_round):
         self.begin_block = begin_block
         self.end_block = end_block
@@ -31,7 +30,7 @@ class ShareMining(SyncerInterface):
             .filter(TokenEvent.block_number <= block_number)\
             .with_entities(
                 func.sum(TokenEvent.amount).label('amount')
-            ).first()
+        ).first()
         total_share_token_amount = Wad(result.amount)
 
         items = db_session.query(TokenEvent)\
@@ -39,14 +38,15 @@ class ShareMining(SyncerInterface):
             .filter(TokenEvent.block_number <= block_number)\
             .group_by(TokenEvent.holder)\
             .with_entities(
-                TokenEvent.holder, 
+                TokenEvent.holder,
                 func.sum(TokenEvent.amount).label('amount')
-            )\
+        )\
             .all()
         for item in items:
             holder = item.holder
             holder_share_token_amount = Wad(item.amount)
-            reward = self.reward_per_block * (holder_share_token_amount / total_share_token_amount)
+            reward = self.reward_per_block * \
+                (holder_share_token_amount / total_share_token_amount)
 
             immature_mining_reward = ImmatureMiningReward()
             immature_mining_reward.block_number = block_number
@@ -55,7 +55,7 @@ class ShareMining(SyncerInterface):
             immature_mining_reward.mcb_balance = reward
             db_session.add(immature_mining_reward)
 
-
     def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
-        db_session.query(ImmatureMiningReward).filter(ImmatureMiningReward.block_number >= block_number).delete()
+        db_session.query(ImmatureMiningReward).filter(
+            ImmatureMiningReward.block_number >= block_number).delete()

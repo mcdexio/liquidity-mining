@@ -1,13 +1,16 @@
 
-from web3 import Web3
-from web3.types import BlockData
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import sessionmaker
-from model.orm import Watcher as DBWatcher, WatcherBlock
-from typing import List
-from syncer.types import SyncerInterface
 import logging
 import traceback
+from typing import List
+
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import sessionmaker
+from web3 import Web3
+from web3.types import BlockData
+
+from model.orm import Watcher as DBWatcher
+from model.orm import WatcherBlock
+from syncer.types import SyncerInterface
 
 
 class Watcher:

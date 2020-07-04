@@ -1,10 +1,11 @@
-from sqlalchemy import Column, Integer, String, DECIMAL, TIMESTAMP, ForeignKey, Table
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy import (DECIMAL, TIMESTAMP, Column, ForeignKey, Integer,
+                        String, Table)
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, sessionmaker
+
 from .db import db_engine
 
 Base = declarative_base()
-
 
 
 class MiningRound(Base):
@@ -15,12 +16,14 @@ class MiningRound(Base):
     end_block_number = Column(Integer)
     watcher_id = Column(Integer)
 
+
 class Watcher(Base):
     __tablename__ = "watchers"
 
     id = Column(Integer, primary_key=True)
     initial_block_number = Column(Integer)
     synced_block_number = Column(Integer)
+
 
 class WatcherBlock(Base):
     __tablename__ = 'watcher_blocks'
@@ -43,9 +46,10 @@ class TokenEvent(Base):
 
 
 class TokenBalance(Base):
-    __table__ = Table("token_balances", Base.metadata, autoload=True, autoload_with=db_engine)
+    __table__ = Table("token_balances", Base.metadata,
+                      autoload=True, autoload_with=db_engine)
     __mapper_args__ = {
-        'primary_key':[__table__.c.token, __table__.c.holder]
+        'primary_key': [__table__.c.token, __table__.c.holder]
     }
 #    watcher_id = Column(Integer)
 #    token = Column(String)
@@ -63,9 +67,10 @@ class ImmatureMiningReward(Base):
 
 
 class ImmatureMiningRewardSummary(Base):
-    __table__ = Table("immature_mining_reward_summaries", Base.metadata, autoload=True, autoload_with=db_engine)
+    __table__ = Table("immature_mining_reward_summaries",
+                      Base.metadata, autoload=True, autoload_with=db_engine)
     __mapper_args__ = {
-        'primary_key':[__table__.c.mining_round, __table__.c.holder]
+        'primary_key': [__table__.c.mining_round, __table__.c.holder]
     }
 
     # mining_round = Column(String)
@@ -107,8 +112,10 @@ class PaymentTransaction(Base):
     payments = relationship("Payment")
 
     def transaction_status(self, code):
-        status = [self.INIT, self.PENDING, self.SUCCESS, self.FAILED, self.CANCELED]
+        status = [self.INIT, self.PENDING,
+                  self.SUCCESS, self.FAILED, self.CANCELED]
         self.status = status[code]
+
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -122,10 +129,12 @@ class Payment(Base):
         "PaymentTransaction", back_populates="payments")
     round_payments = relationship('RoundPayment')
 
+
 class PaymentSummary(Base):
-    __table__ = Table("payment_summaries", Base.metadata, autoload=True, autoload_with=db_engine)
+    __table__ = Table("payment_summaries", Base.metadata,
+                      autoload=True, autoload_with=db_engine)
     __mapper_args__ = {
-        'primary_key':[__table__.c.holder]
+        'primary_key': [__table__.c.holder]
     }
 
     # holder = Column(String)
@@ -144,9 +153,10 @@ class RoundPayment(Base):
 
 
 class RoundPaymentSummary(Base):
-    __table__ = Table("round_payment_summaries", Base.metadata, autoload=True, autoload_with=db_engine)
+    __table__ = Table("round_payment_summaries", Base.metadata,
+                      autoload=True, autoload_with=db_engine)
     __mapper_args__ = {
-        'primary_key':[__table__.c.mining_round, __table__.c.holder]
+        'primary_key': [__table__.c.mining_round, __table__.c.holder]
     }
 
     # mining_round = Column(String)
