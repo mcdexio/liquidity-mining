@@ -3,23 +3,23 @@
 host = "localhost"
 port = 8545
 timeout = 10
+wait_timeout = 600
+
+[mining]
+round = "XIA"
 
 [db]
-url = "postgres://postgres:postgres@server10.jy.mcarlo.com:5434/postgres?sslmode=disable"
+url = ""
 echo = true
 
 [gas]
 gas_level = "fast"
 eth_gas_url = "https://ethgasstation.info/json/ethgasAPI.json"
 
-# accounts for payer
-[[accounts]]
+# account for payer
+[account]
 address = ""
 private_key = ""
-
-#[[accounts]]
-#address = ""
-# private_key = ""
 
 [contracts]
 disperse = "0xD152f549545093347A162Dce210e7293f1452150"

@@ -92,6 +92,11 @@ class MatureMiningRewardCheckpoint(Base):
 
 class PaymentTransaction(Base):
     __tablename__ = "payment_transactions"
+    INIT = "INIT"
+    PENDING = "PENDING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    CANCELED = "CANCELED"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     transaction_nonce = Column(Integer)
@@ -99,6 +104,9 @@ class PaymentTransaction(Base):
     transaction_hash = Column(String, nullable=True)
     status = Column(String, nullable=True)
 
+    def transaction_status(self, code):
+        status = [self.INIT, self.PENDING, self.SUCCESS, self.FAILED, self.CANCELED]
+        self.status = status[code]
 
 class Payment(Base):
     __tablename__ = "payments"

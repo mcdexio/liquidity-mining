@@ -5,7 +5,7 @@ from lib.address import Address
 from lib.wad import Wad
 
 
-class MCBToken(Contract):
+class Disperse(Contract):
     abi = Contract._load_abi(__name__, '../abi/disperse.abi')
     registry = {}
 
@@ -17,7 +17,7 @@ class MCBToken(Contract):
         self.address = address
         self.contract = self._get_contract(web3, self.abi, address)
 
-    def disperse_ether(self, addresses: list, amounts: list, user: Address, gasPrice: int):
+    def disperse_ether(self, addresses: list, amounts: list, user: Address, nonce:int, gasPrice: int):
         total_amount = 0
         for amount in amounts:
             total_amount += amount
@@ -25,16 +25,16 @@ class MCBToken(Contract):
         tx_hash = self.contract.functions.disperseEther(addresses, amounts).transact({
             'from': user.address,
             'value': self.web3.toHex(total_amount_towei),
-            'gasPrice': gasPrice
+            'gasPrice': gasPrice,
+            'nonce': nonce
         })
-        tx_receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
-        return tx_receipt
+        return tx_hash
 
-    def disperse_token(self, token: Address, addresses: list, amounts: list, user: Address, gasPrice: int):
+    def disperse_token(self, token: Address, addresses: list, amounts: list, user: Address, nonce: int, gasPrice: int):
         tx_hash = self.contract.functions.disperseToken(token.address, addresses, amounts).transact({
             'from': user.address,
-            'gasPrice': gasPrice
+            'gasPrice': gasPrice,
+            'nonce': nonce
         })
-        tx_receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
-        return tx_receipt
+        return tx_hash
     
