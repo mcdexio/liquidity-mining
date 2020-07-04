@@ -10,12 +10,6 @@ from contract.erc20 import ERC20Token
 
 class ERC20Tracer(SyncerInterface):
     """Sync the balance of ERC20 tokens by parsing the ERC20 events"""
-
-    event_index = {
-        0: 'mint',
-        1: 'transfer',
-        2: 'burn',
-    }
     
     def __init__(self, token_address, web3):
         self._token_address = token_address.lower()
@@ -49,19 +43,17 @@ class ERC20Tracer(SyncerInterface):
             amount = int(Wad(transfer_info.get('value')))
             cur_block_number = row.blockNumber
             cur_block_hash =  row.blockHash
+            event_index = row.logIndex
 
             if from_addr == '0x0000000000000000000000000000000000000000':
-                event_index = 0
                 transfer_type = 'to'
                 holder = to_addr
                 self._add_token_event(watcher_id, cur_block_number, cur_block_hash, self._token_address, event_index, transfer_type, holder, amount, db_session)
             elif to_addr == '0x0000000000000000000000000000000000000000':
-                event_index = 2
                 transfer_type = 'from'
                 holder = from_addr
                 self._add_token_event(watcher_id, cur_block_number, cur_block_hash, self._token_address, event_index, transfer_type, holder, amount, db_session)
             else:
-                event_index = 1
                 transfer_type = 'from'
                 holder = from_addr
                 self._add_token_event(watcher_id, cur_block_number, cur_block_hash, self._token_address, event_index, transfer_type, holder, amount, db_session)
