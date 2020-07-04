@@ -17,7 +17,7 @@ class MCBToken(Contract):
         self.address = address
         self.contract = self._get_contract(web3, self.abi, address)
 
-    def disperseEther(self, addresses: list, amounts: list, user: Address, gasPrice: int):
+    def disperse_ether(self, addresses: list, amounts: list, user: Address, gasPrice: int):
         total_amount = 0
         for amount in amounts:
             total_amount += amount
@@ -30,7 +30,7 @@ class MCBToken(Contract):
         tx_receipt = self.web3.eth.waitForTransactionReceipt(tx_hash)
         return tx_receipt
 
-    def disperseToken(self, token: Address, addresses: list, amounts: list, user: Address, gasPrice: int):
+    def disperse_token(self, token: Address, addresses: list, amounts: list, user: Address, gasPrice: int):
         tx_hash = self.contract.functions.disperseToken(token.address, addresses, amounts).transact({
             'from': user.address,
             'gasPrice': gasPrice

@@ -11,6 +11,12 @@ class MiningRound(Base):
     end_block_number = Column(Integer)
     watcher_id = Column(Integer)
 
+class Watcher(Base):
+    __tablename__ = "watchers"
+
+    id = Column(Integer, primary_key=True)
+    initial_block_number = Column(Integer)
+    synced_block_number = Column(Integer)
 
 class WatcherBlock(Base):
     __tablename__ = 'watcher_blocks'

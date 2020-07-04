@@ -1,6 +1,6 @@
 from web3 import Web3
 
-from watcher import SyncerInterface
+from syncer import SyncerInterface
 from orm import TokenEvent
 
 from lib.address import Address
@@ -46,7 +46,7 @@ class ERC20Tracer(SyncerInterface):
             transfer_info = row.args
             from_addr = transfer_info.get('from')
             to_addr = transfer_info.get('to')
-            amount = int(Wad(transfer_ino.get('value')))
+            amount = int(Wad(transfer_info.get('value')))
             cur_block_number = row.blockNumber
             cur_block_hash =  row.blockHash
 

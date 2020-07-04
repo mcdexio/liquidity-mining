@@ -1,4 +1,9 @@
 
+from web3 import Web3
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import sessionmaker
+
+
 class Watcher:
     """
         A Watcher watches and syncs with the blockchain's state.
@@ -6,7 +11,7 @@ class Watcher:
         data of the blockchain.
     """
 
-    def __init__(self, watcher_id, syncers):
+    def __init__(self, watcher_id: int, syncers: list, web3: Web3, dbEngine: Engine):
         """initializer of Watcher
 
         Args:
@@ -15,7 +20,8 @@ class Watcher:
         """
         self._watcher_id = watcher_id
         self._syncers = syncers
-
+        self._web3 = web3
+        self._Session = sessionmaker(bind=dbEngine)
 
     def sync(self):
         """
@@ -25,4 +31,3 @@ class Watcher:
 
     def rollback(self, block_number):
         pass
-
