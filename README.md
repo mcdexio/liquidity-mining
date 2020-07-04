@@ -2,7 +2,7 @@
 
 ## Mining Rounds
 
-### 1. XIA (Jul. 8th ~ Aug. 8th)
+### 1. XIA(夏) (Jul. 8th ~ Aug. 8th)
 
 - Total Supply: 410,000 MCB
 - Release: 2 MCB / Block
