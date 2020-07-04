@@ -1,5 +1,4 @@
 from sqlalchemy import create_engine
+import config
 
-
-def connect_db(db_conf):
-    return create_engine(db_conf["url"], echo=db_conf["echo"])
+db_engine = create_engine(config.DB_URL, echo=config.DB_ECHO)

@@ -1,12 +1,11 @@
 from sqlalchemy import Column, Integer, String, DECIMAL, TIMESTAMP, ForeignKey, Table
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from .db import db_engine
 
 Base = declarative_base()
 
-# DB_ENGINE = 
-# DB_SESSION = 
-
+DB_SESSION = sessionmaker(bind=db_engine)
 
 
 class MiningRound(Base):
@@ -45,7 +44,7 @@ class TokenEvent(Base):
 
 
 class TokenBalance(Base):
-    __table__ = Table("token_balances", Base.metadata, autoload=True, autoload_with=engine)
+    __table__ = Table("token_balances", Base.metadata, autoload=True, autoload_with=db_engine)
     __mapper_args__ = {
         'primary_key':[__table__.c.token, __table__.c.holder]
     }
@@ -65,7 +64,7 @@ class ImmatureMiningReward(Base):
 
 
 class ImmatureMiningRewardSummary(Base):
-    __table__ = Table("immature_mining_reward_summaries", Base.metadata, autoload=True, autoload_with=engine)
+    __table__ = Table("immature_mining_reward_summaries", Base.metadata, autoload=True, autoload_with=db_engine)
     __mapper_args__ = {
         'primary_key':[__table__.c.mining_round, __table__.c.holder]
     }
@@ -123,7 +122,7 @@ class Payment(Base):
 
 
 class PaymentSummary(Base):
-    __table__ = Table("payment_summaries", Base.metadata, autoload=True, autoload_with=engine)
+    __table__ = Table("payment_summaries", Base.metadata, autoload=True, autoload_with=db_engine)
     __mapper_args__ = {
         'primary_key':[__table__.c.holder]
     }
@@ -144,7 +143,7 @@ class RoundPayment(Base):
 
 
 class RoundPaymentSummary(Base):
-    __table__ = Table("round_payment_summaries", Base.metadata, autoload=True, autoload_with=engine)
+    __table__ = Table("round_payment_summaries", Base.metadata, autoload=True, autoload_with=db_engine)
     __mapper_args__ = {
         'primary_key':[__table__.c.mining_round, __table__.c.holder]
     }
