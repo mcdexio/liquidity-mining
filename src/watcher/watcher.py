@@ -30,20 +30,22 @@ class Watcher:
         self._Session = sessionmaker(bind=dbEngine, autoflush=False)
         self._logger = logging.getLogger('watcher')
 
-    def sync(self)->int:
+    def sync(self) -> int:
         """
         Sync with the blockchain. The watcher may sync forward or rollback by comparing its block hash with
         the data from node's API
-        Returns the number of block synced.
+        Returns 1 for new block synced otherwise 0.
         """
         result = 0
         db_session = self._Session()
         try:
-            db_watcher = db_session.query(DBWatcher).filter(DBWatcher.id==self._watcher_id).with_for_update().one()
+            db_watcher = db_session.query(DBWatcher).filter(
+                DBWatcher.id == self._watcher_id).with_for_update().one()
             synced_block_number = db_watcher.synced_block_number
             # rollback
             while synced_block_number >= db_watcher.initial_block_number:
-                watcher_block = db_session.query(WatcherBlock).filter(WatcherBlock.watcher_id==self._watcher_id).filter(WatcherBlock.block_number==synced_block_number).one()
+                watcher_block = db_session.query(WatcherBlock).filter(WatcherBlock.watcher_id == self._watcher_id).filter(
+                    WatcherBlock.block_number == synced_block_number).one()
                 block = self._web3.eth.getBlock(synced_block_number)
                 block_hash = block.hash.hex()
                 if watcher_block.block_hash == block_hash:
@@ -60,22 +62,52 @@ class Watcher:
             db_session.commit()
         except Exception as e:
             result = 0
-            self._logger.warning('sync exception:%s', traceback.format_exception(e))
+            self._logger.warning('sync exception:%s',
+                                 traceback.format_exception(e))
         finally:
             db_session.rollback()
         return result
 
-    def rollback(self, block_number):
-        pass
+    def rollback(self, synced_block_number: int) -> int:
+        """force to rollback the database
 
-    def _sync(self, db_watcher:DBWatcher, block:BlockData, db_session:Session):
+        Args:
+            synced_block_number (int): rollback the block after synced_block_number
+
+        Returns:
+            int: new synced_block_number if success, otherwise -1
+        """
+        db_session = self._Session()
+        result = -1
+        try:
+            db_watcher = db_session.query(DBWatcher).filter(
+                DBWatcher.id == self._watcher_id).with_for_update().one()
+            if synced_block_number < db_watcher.synced_block_number:
+                self._rollback(db_watcher, synced_block_number, db_session)
+                result = 0
+            else:
+                self._logger.warning(
+                    "rollback error:synced_block_number[%d] is larger than db[%d]", synced_block_number, db_watcher.synced_block_number)
+            db_session.commit()
+        except Exception as e:
+            self._logger.warning('sync exception:%s',
+                                 traceback.format_exception(e))
+        finally:
+            db_session.rollback()
+        return result
+
+    def _sync(self, db_watcher: DBWatcher, block: BlockData, db_session):
         db_watcher.synced_block_number = block.number
         block_hash = block.hash.hex()
-        watcher_block = WatcherBlock(watcher_id=self._watcher_id, block_number=block.number, block_hash=block_hash)
+        watcher_block = WatcherBlock(
+            watcher_id=self._watcher_id, block_number=block.number, block_hash=block_hash)
         db_session.add(watcher_block)
         for syncer in self._syncers:
             syncer.sync(self._watcher_id, block.number, block_hash, db_session)
 
-    def _rollback(self, db_watcher:DBWatcher, block_number:int, db_session:Session):
-
-        pass
+    def _rollback(self, db_watcher: DBWatcher, synced_block_number: int, db_session):
+        db_watcher.synced_block_number = synced_block_number
+        db_session.query(WatcherBlock).filter(WatcherBlock.watcher_id == self._watcher_id).filter(
+            WatcherBlock.block_number > synced_block_number).delete()
+        for syncer in self._syncers:
+            syncer.rollback(self._watcher_id, synced_block_number, db_session)

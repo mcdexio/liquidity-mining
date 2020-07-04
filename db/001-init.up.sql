@@ -141,4 +141,4 @@ GROUP BY
 CREATE UNIQUE INDEX idx_round_payment_summaries_mining_round_holder ON round_payment_summaries (mining_round, holder);
 
 INSERT INTO watchers (id, initial_block_number, synced_block_number) VALUES (1, 10289334, 10289333);
-INSERT INTO mining_round (round, begin_block_number, end_block_number, supply, release_per_block, watcher_id) VALUES ('XIA', 10420000, 10625000, 410000, 1);
+INSERT INTO mining_rounds (round, begin_block_number, end_block_number, supply, release_per_block, watcher_id) VALUES ('XIA', 10420000, 10620000, 410000, 2, 1);
