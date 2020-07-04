@@ -5,7 +5,6 @@ from orm import TokenEvent
 
 from lib.address import Address
 from lib.wad import Wad
-from watcher import Watcher
 from contract.ERC20Token import ERC20Token
 
 
@@ -20,9 +19,9 @@ class ERC20Tracer(SyncerInterface):
     
     def __init__(self, token_address, web3):
         self._token_address = token_address.lower()
-        self.web3 = web3
+        self._web3 = web3
         # contract 
-        self.erc20_token = ERC20Token(web3=web3, address=Address(token_address))
+        self._erc20_token = ERC20Token(web3=web3, address=Address(token_address))
 
     def _add_token_event(self, watcher_id, block_number, block_hash, token_address, event_index, transfer_type, holder, amount, db_session):
         token_event = TokenEvent()
@@ -39,7 +38,8 @@ class ERC20Tracer(SyncerInterface):
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
-        transfer_filter = self.erc20_contract.events.Transfer().createFilter(
+        
+        transfer_filter = self._erc20_token.events.Transfer().createFilter(
             fromBlock=Web3.toHex(block_number), toBlock=Web3.toHex(block_number))
         all_filter_events = transfer_filter.get_all_entries()
         for row in all_filter_events:
