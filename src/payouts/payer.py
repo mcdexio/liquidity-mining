@@ -14,13 +14,14 @@ from web3.middleware import construct_sign_and_send_raw_middleware, geth_poa_mid
 
 from lib.address import Address
 from lib.wad import Wad
+from model.init_db import init_db
 from contract.ERC20Token import ERC20Token
 
 class Payer:
     logger = logging.getLogger()
 
     def __init__(self, args: list, **kwargs):
-        parser = argparse.ArgumentParser(prog='mai-liquidity-mining-payer')
+        parser = argparse.ArgumentParser(prog='liquidity-mining-payer')
         parser.add_argument("--config", help="config path", default="./config.toml", type=str)
         self.arguments = parser.parse_args(args)
 
@@ -32,9 +33,11 @@ class Payer:
                                                                               request_kwargs={"timeout": self.config['rpc']['timeout']}))
         self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         self.gas_price = self.web3.toWei(10, "gwei")
-        self.gas_level = 'fast'
-        self.eth_gas_url = 'https://ethgasstation.info/json/ethgasAPI.json'
+        self.gas_level = ''
+        self.eth_gas_url = ''
         self.set_gas_info()
+
+        init_db(self.config['db'])
 
         # contract 
         self.MCBToken = ERC20Token(web3=self.web3, address=Address(self.config['contracts']['MCB_token']))

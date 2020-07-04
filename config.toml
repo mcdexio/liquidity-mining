@@ -4,6 +4,10 @@ host = "localhost"
 port = 8545
 timeout = 10
 
+[db]
+url = "postgres://postgres:postgres@server10.jy.mcarlo.com:5434/postgres?sslmode=disable"
+echo = true
+
 [gas]
 gas_level = "fast"
 eth_gas_url = "https://ethgasstation.info/json/ethgasAPI.json"
@@ -38,7 +42,7 @@ disable_existing_loggers = true
     class = "logging.handlers.RotatingFileHandler"
     level = "DEBUG"
     formatter = 'simple'
-    filename = "./log/keeper.log"
+    filename = "./log/payer.log"
     maxBytes = 104857600 # 100MB
     backupCount = 2
     encoding = "utf8"
