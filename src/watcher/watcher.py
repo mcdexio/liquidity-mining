@@ -34,7 +34,7 @@ class Watcher:
         self._web3 = web3
         self._Session = sessionmaker(bind=db_engine)
         self._logger = logging.getLogger()
-        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = "./log/watcher.log"
+        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = config.WATCHER_LOGPATH
         logging.config.dictConfig(config.LOG_CONFIG)
 
     def sync(self) -> int:

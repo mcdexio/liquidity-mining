@@ -22,7 +22,7 @@ from model import DBSession, PaymentTransaction, Payment, RoundPayment, RoundPay
 class Payer:
     def __init__(self):
         self._logger = logging.getLogger()
-        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = "./log/payer.log"
+        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = config.PAYER_LOGPATH
         logging.config.dictConfig(config.LOG_CONFIG)
 
         self._web3 = Web3(HTTPProvider(endpoint_uri=config.ETH_RPC_URL,
