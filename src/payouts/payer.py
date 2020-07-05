@@ -23,8 +23,8 @@ class Payer:
 
     def __init__(self, args: list, **kwargs):
 
-        self.web3 = Web3(HTTPProvider(endpoint_uri=config.RPC_URL,
-                        request_kwargs={"timeout": config.RPC_TIMEOUT}))
+        self.web3 = Web3(HTTPProvider(endpoint_uri=config.ETH_RPC_URL,
+                        request_kwargs={"timeout": config.ETH_RPC_TIMEOUT}))
         self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         self.gas_price = self.web3.toWei(10, "gwei")
         self._get_gas_price()

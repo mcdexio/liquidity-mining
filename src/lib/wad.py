@@ -90,3 +90,5 @@ class Wad:
     def max(*args):
         """Returns the higher of the Wad values"""
         return reduce(lambda x, y: x if x > y else y, args[1:], args[0])
+
+

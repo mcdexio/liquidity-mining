@@ -1,6 +1,6 @@
 # eth node rpc request
-RPC_URL = "http://localhost:8545"
-RPC_TIMEOUT = 10
+ETH_RPC_URL = "http://localhost:8545"
+ETH_RPC_TIMEOUT = 10
 
 # mining MCB 
 MINING_ROUND = "XIA"
