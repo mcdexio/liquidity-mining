@@ -74,11 +74,9 @@ class Payer:
         return True
 
     def _check_pending_transactions(self) -> bool:
-        stats = [PaymentTransaction.INIT, PaymentTransaction.PENDING]
-
         db_session = DBSession()
         pending_transactions = db_session.query(PaymentTransaction)\
-            .filter(PaymentTransaction.status.in_(stats)).all()
+            .filter_by(status = PaymentTransaction.PENDING).all()
         for transaction in pending_transactions:
             try:
                 tx_receipt = self._web3.eth.waitForTransactionReceipt(transaction.transaction_hash, timeout=config.WAIT_TIMEOUT)
@@ -108,7 +106,8 @@ class Payer:
             }
             pt.transaction_data = json.dumps(data)
             pt.transaction_hash = tx_hash
-            pt.transaction_status(0)
+            # 0: failed, 1: success, 2: pending
+            pt.transaction_status(2)
             db_session.add(pt)
             db_session.commit()
         except Exception as e:
