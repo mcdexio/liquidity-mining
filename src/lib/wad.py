@@ -1,9 +1,12 @@
 from functools import total_ordering, reduce
-from decimal import *
+from decimal import Decimal, Context, ROUND_DOWN
 
 
 _context = Context(prec=1000, rounding=ROUND_DOWN)
 
+
+# TODO: support any decimals
+DECIMALS = 18
 
 @total_ordering
 class Wad:

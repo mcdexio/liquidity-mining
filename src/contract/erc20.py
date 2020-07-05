@@ -2,7 +2,7 @@ from web3 import Web3
 
 from lib.contract import Contract
 from lib.address import Address
-from lib.wad import Wad
+from lib.wad import Wad, DECIMALS
 
 
 class ERC20Token(Contract):
@@ -16,6 +16,10 @@ class ERC20Token(Contract):
         self.web3 = web3
         self.address = address
         self.contract = self._get_contract(web3, self.abi, address)
+        self.decimals = self.contract.functions.decimals().call()
+        if self.decimals != DECIMALS:
+            raise "ERC20Token:Unsupoorted decimals[%d] address[%s]" % (self.decimals, self.address)
+
 
     def total_supply(self) -> Wad:
         return Wad(self.contract.functions.totalSupply().call())

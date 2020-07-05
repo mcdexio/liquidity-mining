@@ -52,7 +52,7 @@ class ShareMining(SyncerInterface):
             immature_mining_reward.holder = holder
             immature_mining_reward.mcb_balance = reward
             db_session.add(immature_mining_reward)
-            db_session.execute("refresh materialized view immature_mining_reward_summaries")
+        db_session.execute("refresh materialized view immature_mining_reward_summaries")
 
     def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
