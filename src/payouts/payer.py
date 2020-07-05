@@ -83,7 +83,10 @@ class Payer:
             try:
                 tx_receipt = self._web3.eth.waitForTransactionReceipt(transaction.transaction_hash, timeout=config.WAIT_TIMEOUT)
                 data = json.loads(transaction.transaction_data)
-                self._save_payments_info(tx_receipt, data["miners"], data["amounts"])
+                amounts = []
+                for amount in data["amounts"]:
+                    amounts.append(Decimal(amount))
+                self._save_payments_info(tx_receipt, data["miners"], amounts)
             except Exception as e:
                 self._logger.fatal(
                     f"get trasaction fail! tx_hash:{transaction.transaction_hash}, err:{e}")
@@ -92,13 +95,16 @@ class Payer:
         return True
 
     def _save_payment_transaction(self, tx_hash, miners, amounts):
+        amounts_str = []
+        for amount in amounts:
+            amounts_str.append(str(amount))
         db_session = DBSession()
         try:
             pt = PaymentTransaction()
             pt.transaction_nonce = self._nonce
             data = {
                 "miners": miners,
-                "amounts": amounts,
+                "amounts": amounts_str,
             }
             pt.transaction_data = json.dumps(data)
             pt.transaction_hash = tx_hash
@@ -115,7 +121,7 @@ class Payer:
         try:
             # update transaction status
             pt = db_session.query(PaymentTransaction)\
-                .filter_by(transaction_hash=tx_receipt["transactionHash"]).first()
+                .filter_by(transaction_hash=self._web3.toHex(tx_receipt["transactionHash"])).first()
             pt.transaction_status(tx_receipt["status"])
             db_session.add(pt)
 
@@ -174,9 +180,10 @@ class Payer:
         if self._check_account_from_key() is False:
             return
         
-        # just need one time
-        self._MCBToken.approve(self._disperse.address, self._payer_account)
-        
+        # approve MCB token to disperse for multiple transaction
+        if self._MCBToken.allowance(self._disperse.address, self._payer_account) == Wad(0):
+            self._MCBToken.approve(self._disperse.address, self._payer_account)
+
         # check pending transactions
         if self._check_pending_transactions() is False:
             return
@@ -202,7 +209,7 @@ class Payer:
             try:
                 tx_hash = self._disperse.disperse_token(self._MCBToken.address, miners, amounts,
                     self._payer_account, self._nonce, self._gas_price)
-                self._save_payment_transaction(tx_hash, miners, amounts)
+                self._save_payment_transaction(self._web3.toHex(tx_hash), miners, amounts)
             except Exception as e:
                 self._logger.fatal(f"disperse transaction fail! Exception:{e}")
                 continue
