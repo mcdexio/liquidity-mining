@@ -107,8 +107,8 @@ CREATE TABLE round_payments (
   mining_round text NOT NULL,
   holder text NOT NULL,
   amount numeric(78, 18) NOT NULL,
-  payment_id int NOT NULL,
-  FOREIGN KEY (payment_id) REFERENCES payments (id)
+  transaction_id int NOT NULL,
+  FOREIGN KEY (transaction_id) REFERENCES payment_transactions (id)
 );
 
 CREATE TABLE round_payment_summaries (

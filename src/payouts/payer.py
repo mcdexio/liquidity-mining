@@ -17,7 +17,7 @@ from lib.contract import Contract
 from lib.wad import Wad
 from contract.disperse import Disperse
 from contract.erc20 import ERC20Token
-from model import DBSession, PaymentTransaction, Payment, RoundPayment, RoundPaymentSummary, MatureMiningReward
+from model import DBSession, PaymentTransaction, Payment, RoundPayment, PaymentSummary, RoundPaymentSummary, MatureMiningReward
 
 class Payer:
     def __init__(self):
@@ -126,26 +126,50 @@ class Payer:
 
             # save payments
             if pt.status == PaymentTransaction.SUCCESS:
+                miner_payments = db_session.query(PaymentSummary).all()
+                miner_round_payments = db_session.query(RoundPaymentSummary).all()
+
+                payments_map = {}
+                for payment in miner_payments:
+                    payments_map[payment.holder] = payment
+                round_payments_map = {}
+                for round_payment in miner_round_payments:
+                    round_payments_map[round_payment.holder] = round_payment
                 for i in range(len(miners)):
+                    # save payments
                     p = Payment()
                     p.holder = miners[i]
                     p.amount = amounts[i]
                     p.pay_time = datetime.datetime.utcnow()
                     p.transaction_id = pt.id
                     db_session.add(p)
-                    db_session.commit()
-                    db_session.execute(
-                        "refresh materialized view payment_summaries")
 
+                    # save round payments
                     rp = RoundPayment()
                     rp.mining_round = config.MINING_ROUND
                     rp.holder = miners[i]
                     rp.amount = amounts[i]
-                    rp.payment_id = p.id
+                    rp.transaction_id = pt.id
                     db_session.add(rp)
-                    db_session.commit()
-                    db_session.execute(
-                        "refresh materialized view round_payment_summaries")
+
+                    # update payment summaries
+                    payment = payments_map[p.holder]
+                    if payment is not None:
+                        payment.paid_amount += p.amount
+                    else:
+                        payment = Payment()
+                        payment.holder = p.holder
+                        payment.paid_amount = p.amount
+                    db_session.add(payment)
+                    # update round payment summaries
+                    round_payment = round_payments_map[p.holder]
+                    if round_payment is not None:
+                        round_payment.paid_amount += p.amount
+                    else:
+                        round_payment = Payment()
+                        round_payment.holder = p.holder
+                        round_payment.paid_amount = p.amount
+                    db_session.add(round_payment)
             else:
                 self._logger.warning(
                     f"transaction not success! tx_receipt:{tx_receipt}")
