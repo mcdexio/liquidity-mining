@@ -50,7 +50,7 @@ LOG_CONFIG = {
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "simple",
-            "filename": "./log/payer.log",
+            "filename": "",
             "maxBytes": 104857600, # 100MB
             "backupCount": 7,
             "encoding": "utf8"

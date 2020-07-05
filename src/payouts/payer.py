@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import logging.config
 import requests
 import math
 from decimal import Decimal
@@ -20,7 +21,8 @@ from model import DBSession, PaymentTransaction, Payment, RoundPayment, RoundPay
 
 class Payer:
     def __init__(self):
-        self._logger = logging.getLogger("payer")
+        self._logger = logging.getLogger()
+        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = "./log/payer.log"
         logging.config.dictConfig(config.LOG_CONFIG)
 
         self._web3 = Web3(HTTPProvider(endpoint_uri=config.ETH_RPC_URL,
