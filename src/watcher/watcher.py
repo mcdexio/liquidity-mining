@@ -22,7 +22,7 @@ class Watcher:
         data of the blockchain.
     """
 
-    def __init__(self, watcher_id: int, syncers: List[SyncerInterface], web3: Web3, db_engine: Engine):
+    def __init__(self, watcher_id: int, syncers: List[SyncerInterface], web3: Web3, db_engine: Engine, end_block_number:int=-1):
         """initializer of Watcher
 
         Args:
@@ -34,16 +34,21 @@ class Watcher:
         self._web3 = web3
         self._Session = sessionmaker(bind=db_engine)
         self._logger = logging.getLogger()
+        self._end_block_number = end_block_number
         config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = config.WATCHER_LOGPATH
         logging.config.dictConfig(config.LOG_CONFIG)
+
 
     def sync(self) -> int:
         """
         Sync with the blockchain. The watcher may sync forward or rollback by comparing its block hash with
         the data from node's API
-        Returns 1 for new block synced otherwise 0.
+        Returns:
+            positive number: the synced block number
+            zero: reach the end of the watcher
+            negative: error
         """
-        result = 0
+        result = -1
         db_session = self._Session()
         try:
             db_watcher = db_session.query(DBWatcher).filter(
@@ -63,15 +68,18 @@ class Watcher:
             if synced_block_number != db_watcher.synced_block_number:
                 self._rollback(synced_block_number, db_session, db_watcher)
             to_sync = synced_block_number + 1
+            if self._end_block_number > 0 and to_sync > self._end_block_number + config.MATURE_CONFIRM:
+                self._logger.warning('reach end of the watcher: end block[%d], synced block[%d]', self._end_block_number, synced_block_number)
+                return 0
             if to_sync <= self._web3.eth.blockNumber:
                 new_block = self._web3.eth.getBlock(to_sync)
                 self._sync(db_watcher, new_block, db_session)
-                result = 1
+                result = to_sync
             db_session.commit()
             if result:
                 self._logger.info('sync block[%d] hash[%s]', new_block.number, new_block.hash)
         except:
-            result = 0
+            result = -1
             self._logger.warning('sync error', exec_info=1, stack_info=1)
         finally:
             db_session.rollback()

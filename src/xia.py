@@ -32,15 +32,17 @@ def create_watcher():
         config.MATURE_CONFIRM, config.MATURE_CHECKPOINT_INTERVAL, MINING_ROUND)
 
     syncers = [share_token_tracer, miner, mature_checker]
-    return Watcher(mining_round.watcher_id, syncers, web3, db_engine)
+    return Watcher(mining_round.watcher_id, syncers, web3, db_engine, mining_round.end_block_number)
 
 
 def serv():
     watcher = create_watcher()
     while True:
         synced = watcher.sync()
-        if not synced:
-            time.sleep(3)
+        if synced < 0:
+            time.sleep(config.WATCHER_CHECK_INTERVAL)
+        elif synced == 0:
+            return
 
 
 def rollback(synced_block_number: int):

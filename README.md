@@ -37,3 +37,28 @@
 2. Calculate and save the holders' mining reward
 3. Pay MCB to the holders
 4. API for querying data
+
+
+## Usage
+
+### Install Dependences
+```
+$ apt-get install postgresql
+$ pip3 install -r requirements.txt
+```
+
+### Edit Configure
+
+Edit the `src/config/config.py`:
+-  `ETH_RPC_URL`: Etherume HTTP API URL.
+-  `DB_URL`:  Postgresql URL
+
+### Run Watcher
+```
+$ python3 xia.py
+```
+
+### Use Tool
+```
+$ python3 tool.py
+```

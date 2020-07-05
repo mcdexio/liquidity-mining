@@ -31,9 +31,9 @@ class Payer:
         self._gas_price = self._web3.toWei(10, "gwei")
         self._get_gas_price()
         self._nonce = 0
+        self._payer_account = None
         # init payer transaction nonce
         self._init_payer_nonce()
-        self._check_account_from_key()
 
         # contract
         self._disperse = Disperse(
@@ -56,19 +56,20 @@ class Payer:
         db_session = DBSession()
         latest_transaction = db_session.query(PaymentTransaction).order_by(desc(PaymentTransaction.transaction_nonce)).first()
         if latest_transaction is None:
-            count = self._web3.eth.eth_getTransactionCount(config.PAYER_ADDRESS)
-            self.nonce = count+1
+            count = self._web3.eth.getTransactionCount(config.PAYER_ADDRESS)
+            self._nonce = count+1
         else:
-            self.nonce = latest_transaction.transaction_nonce+1
+            self._nonce = latest_transaction.transaction_nonce+1
 
     def _check_account_from_key(self):
         try:
             account = Account()
             acct = account.from_key(config.PAYER_KEY)
-            self.web3.middleware_onion.add(
+            self._web3.middleware_onion.add(
                 construct_sign_and_send_raw_middleware(acct))
+            self._payer_account = Address(acct.address)
         except:
-            self._logger.fatal(f"Account {config.PAYER_KEY} register key error")
+            self._logger.fatal(f"Account {config.PAYER_ADDRESS} register key error")
             return False
         return True
 
@@ -94,7 +95,7 @@ class Payer:
         db_session = DBSession()
         try:
             pt = PaymentTransaction()
-            pt.transaction_nonce = self.nonce
+            pt.transaction_nonce = self._nonce
             data = {
                 "miners": miners,
                 "amounts": amounts,
@@ -160,15 +161,22 @@ class Payer:
             "amounts": [],
         }
         for item in items:
-            if item.paid_amount is None:
-                item.paid_amount = Decimal(0)
-            unpaid = item.mcb_balance - item.paid_amount
+            unpaid = item.mcb_balance
+            if item.paid_amount is not None:
+                unpaid = item.mcb_balance - item.paid_amount
             if unpaid > Decimal(0):
                 result["miners"].append(item.holder)
                 result["amounts"].append(unpaid)
+                self._logger.info(f'miner {item.holder} unpaid rewards {unpaid}')
         return result
 
     def run(self):
+        if self._check_account_from_key() is False:
+            return
+        
+        # just need one time
+        self._MCBToken.approve(self._disperse.address, self._payer_account)
+        
         # check pending transactions
         if self._check_pending_transactions() is False:
             return
@@ -182,7 +190,7 @@ class Payer:
 
         # get gas price for transaction
         self._get_gas_price()
-        self.nonce = self.nonce+1
+        self._nonce = self._nonce+1
         # send MCB to all accounts
         for i in range(math.ceil(miners_count/config.MAX_PATCH_NUM)):
             start_idx = i*config.MAX_PATCH_NUM
@@ -193,7 +201,7 @@ class Payer:
             amounts = unpaid_rewards["amounts"][start_idx:end_idx]
             try:
                 tx_hash = self._disperse.disperse_token(self._MCBToken.address, miners, amounts,
-                    config.PAYER_ADDRESS, self.nonce, self.gas_price)
+                    self._payer_account, self._nonce, self._gas_price)
                 self._save_payment_transaction(tx_hash, miners, amounts)
             except Exception as e:
                 self._logger.fatal(f"disperse transaction fail! Exception:{e}")

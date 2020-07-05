@@ -22,7 +22,8 @@ CREATE TABLE mining_rounds (
   end_block_number int NOT NULL,
   supply int NOT NULL,
   release_per_block int NOT NULL,
-  watcher_id int NOT NULL
+  watcher_id int NOT NULL,
+  FOREIGN KEY (watcher_id) REFERENCES watchers (id)
 );
 
 CREATE TABLE token_events (
@@ -92,7 +93,7 @@ CREATE TABLE mature_mining_reward_checkpoints (
 
 CREATE TABLE payment_transactions (
   id serial PRIMARY KEY,
-  trasaction_nonce int NOT NULL,
+  transaction_nonce int NOT NULL,
   transaction_data text NOT NULL,
   transaction_hash text,
   status text NOT NULL

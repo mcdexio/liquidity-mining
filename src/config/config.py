@@ -9,7 +9,7 @@ WAIT_TIMEOUT = 600
 
 # db
 DB_URL = "postgres://postgres:postgres@localhost/postgres?sslmode=disable"
-DB_ECHO = True
+DB_ECHO = False
 
 # gas price
 GAS_LEVEL = "fast"
@@ -26,6 +26,9 @@ MCB_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000"
 # reward mature
 MATURE_CONFIRM = 100
 MATURE_CHECKPOINT_INTERVAL = 300
+
+# watcher
+WATCHER_CHECK_INTERVAL = 3 # 3 sec
 
 # XIA
 XIA_SHARE_TOKEN_ADDRESS = "0xAe694FB9DCD1E6195519c0056B2aB19380B26FF2"
