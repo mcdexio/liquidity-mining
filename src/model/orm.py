@@ -16,6 +16,7 @@ class Watcher(Base):
     synced_block_number = Column(Integer)
 
     mining_rounds = relationship("MiningRound")
+    watcher_blocks = relationship("WatcherBlock")
 
 
 class MiningRound(Base):
@@ -26,7 +27,7 @@ class MiningRound(Base):
     end_block_number = Column(Integer)
     release_per_block = Column(Integer)
     supply = Column(Integer)
-    watcher_id = Column(Integer)
+    watcher_id = Column(Integer, ForeignKey('watchers.id'))
 
 
 class WatcherBlock(Base):
@@ -38,7 +39,7 @@ class WatcherBlock(Base):
     watcher_id = Column(Integer, ForeignKey('watchers.id'))
 
     watcher = relationship(
-        "Watcher", back_populates="mining_rounds")
+        "Watcher", back_populates="watcher_blocks")
 
 
 class TokenEvent(Base):
