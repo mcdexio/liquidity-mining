@@ -153,23 +153,24 @@ class Payer:
                     db_session.add(rp)
 
                     # update payment summaries
-                    payment = payments_map[p.holder]
-                    if payment is not None:
-                        payment.paid_amount += p.amount
+                    payment_summary = payments_map.get(p.holder)
+                    if payment_summary is not None:
+                        payment_summary.paid_amount += p.amount
                     else:
-                        payment = Payment()
-                        payment.holder = p.holder
-                        payment.paid_amount = p.amount
-                    db_session.add(payment)
+                        payment_summary = PaymentSummary()
+                        payment_summary.holder = p.holder
+                        payment_summary.paid_amount = p.amount
+                    db_session.add(payment_summary)
                     # update round payment summaries
-                    round_payment = round_payments_map[p.holder]
-                    if round_payment is not None:
-                        round_payment.paid_amount += p.amount
+                    round_payment_summary = round_payments_map.get(p.holder)
+                    if round_payment_summary is not None:
+                        round_payment_summary.paid_amount += p.amount
                     else:
-                        round_payment = Payment()
-                        round_payment.holder = p.holder
-                        round_payment.paid_amount = p.amount
-                    db_session.add(round_payment)
+                        round_payment_summary = RoundPaymentSummary()
+                        round_payment_summary.mining_round = rp.mining_round
+                        round_payment_summary.holder = rp.holder
+                        round_payment_summary.paid_amount = rp.amount
+                    db_session.add(round_payment_summary)
             else:
                 self._logger.warning(
                     f"transaction not success! tx_receipt:{tx_receipt}")
@@ -177,6 +178,8 @@ class Payer:
             db_session.commit()
         except Exception as e:
             self._logger.warning(f'save payment info fail! err:{e}')
+            # raise exception for _check_pending_transactions
+            raise
         finally:
             db_session.rollback()
 
@@ -223,9 +226,9 @@ class Payer:
 
         # get gas price for transaction
         self._get_gas_price()
-        self._nonce = self._nonce+1
         # send MCB to all accounts
         for i in range(math.ceil(miners_count/config.MAX_PATCH_NUM)):
+            self._nonce = self._nonce+1
             start_idx = i*config.MAX_PATCH_NUM
             end_idx = min((i+1)*config.MAX_PATCH_NUM, miners_count)
             self._logger.info(f"miners count: {miners_count}, send from {start_idx} to {end_idx}")

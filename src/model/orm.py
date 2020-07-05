@@ -111,6 +111,7 @@ class PaymentTransaction(Base):
     status = Column(String, nullable=True)
 
     payments = relationship("Payment")
+    round_payments = relationship('RoundPayment')
 
     # 0: failed, 1: success, 2: pending
     def transaction_status(self, code):
@@ -128,7 +129,6 @@ class Payment(Base):
     transaction_id = Column(Integer, ForeignKey('payment_transactions.id'))
     payment_transaction = relationship(
         "PaymentTransaction", back_populates="payments")
-    round_payments = relationship('RoundPayment')
 
 
 class PaymentSummary(Base):
@@ -145,8 +145,9 @@ class RoundPayment(Base):
     mining_round = Column(String)
     holder = Column(String)
     amount = Column(DECIMAL(78, 18))
-    payment_id = Column(Integer, ForeignKey('payments.id'))
-    payment = relationship("Payment", back_populates="round_payments")
+    transaction_id = Column(Integer, ForeignKey('payment_transactions.id'))
+    payment_transaction = relationship(
+        "PaymentTransaction", back_populates="round_payments")
 
 
 class RoundPaymentSummary(Base):
