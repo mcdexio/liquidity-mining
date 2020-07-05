@@ -29,20 +29,16 @@ class MiningRound(Base):
     watcher_id = Column(Integer)
 
 
-class Watcher(Base):
-    __tablename__ = "watchers"
-    watcher_id = Column(Integer, ForeignKey('watchers.id'))
-
-    watcher = relationship(
-        "Watcher", back_populates="mining_rounds")
-
-
 class WatcherBlock(Base):
     __tablename__ = 'watcher_blocks'
 
     watcher_id = Column(Integer, primary_key=True)
     block_number = Column(Integer, primary_key=True)
     block_hash = Column(String)
+    watcher_id = Column(Integer, ForeignKey('watchers.id'))
+
+    watcher = relationship(
+        "Watcher", back_populates="mining_rounds")
 
 
 class TokenEvent(Base):
