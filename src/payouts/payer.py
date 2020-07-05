@@ -133,6 +133,7 @@ class Payer:
                     p.pay_time = datetime.datetime.utcnow()
                     p.transaction_id = pt.id
                     db_session.add(p)
+                    db_session.commit()
                     db_session.execute(
                         "refresh materialized view payment_summaries")
 
@@ -141,6 +142,8 @@ class Payer:
                     rp.holder = miners[i]
                     rp.amount = amounts[i]
                     rp.payment_id = p.id
+                    db_session.add(rp)
+                    db_session.commit()
                     db_session.execute(
                         "refresh materialized view round_payment_summaries")
             else:
