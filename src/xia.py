@@ -14,7 +14,6 @@ from watcher import Watcher
 
 MINING_ROUND = 'XIA'
 
-
 def create_watcher():
     web3 = Web3(HTTPProvider(endpoint_uri=config.ETH_RPC_URL,
                              request_kwargs={"timeout": config.ETH_RPC_TIMEOUT}))

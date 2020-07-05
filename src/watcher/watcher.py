@@ -37,6 +37,7 @@ class Watcher:
         config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = config.WATCHER_LOGPATH
         logging.config.dictConfig(config.LOG_CONFIG)
 
+
     def sync(self) -> int:
         """
         Sync with the blockchain. The watcher may sync forward or rollback by comparing its block hash with

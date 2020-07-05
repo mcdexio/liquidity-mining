@@ -22,7 +22,8 @@ CREATE TABLE mining_rounds (
   end_block_number int NOT NULL,
   supply int NOT NULL,
   release_per_block int NOT NULL,
-  watcher_id int NOT NULL
+  watcher_id int NOT NULL,
+  FOREIGN KEY (watcher_id) REFERENCES watchers (id)
 );
 
 CREATE TABLE token_events (

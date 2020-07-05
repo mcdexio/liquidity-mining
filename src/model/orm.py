@@ -8,21 +8,26 @@ from .db import db_engine
 Base = declarative_base()
 
 
-class MiningRound(Base):
-    __tablename__ = 'mining_rounds'
-
-    round = Column(String, primary_key=True)
-    begin_block_number = Column(Integer)
-    end_block_number = Column(Integer)
-    watcher_id = Column(Integer)
-
-
 class Watcher(Base):
     __tablename__ = "watchers"
 
     id = Column(Integer, primary_key=True)
     initial_block_number = Column(Integer)
     synced_block_number = Column(Integer)
+
+    mining_rounds = relationship("MiningRound")
+
+
+class MiningRound(Base):
+    __tablename__ = 'mining_rounds'
+
+    round = Column(String, primary_key=True)
+    begin_block_number = Column(Integer)
+    end_block_number = Column(Integer)
+    watcher_id = Column(Integer, ForeignKey('watchers.id'))
+
+    watcher = relationship(
+        "Watcher", back_populates="mining_rounds")
 
 
 class WatcherBlock(Base):
@@ -79,7 +84,7 @@ class ImmatureMiningRewardSummary(Base):
 
 
 class MatureMiningReward(Base):
-    __tablename__ = "mature_mining_reward"
+    __tablename__ = "mature_mining_rewards"
 
     mining_round = Column(String, primary_key=True)
     holder = Column(String, primary_key=True)

@@ -9,7 +9,7 @@ WAIT_TIMEOUT = 600
 
 # db
 DB_URL = "postgres://postgres:postgres@localhost/postgres?sslmode=disable"
-DB_ECHO = True
+DB_ECHO = False
 
 # gas price
 GAS_LEVEL = "fast"
