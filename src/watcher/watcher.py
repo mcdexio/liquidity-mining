@@ -31,7 +31,7 @@ class Watcher:
         self._syncers = syncers
         self._web3 = web3
         self._Session = sessionmaker(bind=db_engine)
-        self._logger = logging.getLogger('watcher')
+        self._logger = logging.getLogger('watcher[%d]' % self._watcher_id)
 
     def sync(self) -> int:
         """
@@ -53,6 +53,7 @@ class Watcher:
                 block_hash = block.hash.hex()
                 if watcher_block.block_hash == block_hash:
                     break
+                self._logger.warning('rollback block[%d] old_hash[%s] new_hash[%s]', watcher_block.block_number, watcher_block.block_hash, block_hash)
                 synced_block_number -= 1
 
             if synced_block_number != db_watcher.synced_block_number:
@@ -63,10 +64,11 @@ class Watcher:
                 self._sync(db_watcher, new_block, db_session)
                 result = 1
             db_session.commit()
-        except Exception as e:
+            if result:
+                self._logger.info('sync block[%d] hash[%s]', new_block.number, new_block.hash)
+        except:
             result = 0
-            self._logger.warning('sync exception:%s',
-                                 traceback.format_exc())
+            self._logger.warning('sync error', exec_info=1, stack_info=1)
         finally:
             db_session.rollback()
         return result
@@ -92,9 +94,8 @@ class Watcher:
                 self._logger.warning(
                     "rollback error:synced_block_number[%d] is larger than db[%d]", synced_block_number, db_watcher.synced_block_number)
             db_session.commit()
-        except Exception as e:
-            self._logger.warning('sync exception:%s',
-                                 traceback.format_exc())
+        except:
+            self._logger.warning('rollback error', exec_info=1, stack_info=1)
         finally:
             db_session.rollback()
         return result

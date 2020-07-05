@@ -22,7 +22,7 @@ class Wad:
     @classmethod
     def from_number(cls, number):
         # assert(number >= 0)
-        pwr = Decimal(10) ** 18
+        pwr = Decimal(10) ** DECIMALS
         dec = Decimal(str(number)) * pwr
         return Wad(int(dec.quantize(1, context=_context)))
 
@@ -31,7 +31,7 @@ class Wad:
 
     def __str__(self):
         tmp = str(self.value).zfill(19)
-        return (tmp[0:len(tmp)-18] + "." + tmp[len(tmp)-18:len(tmp)]).replace("-.", "-0.")
+        return (tmp[0:len(tmp)-DECIMALS] + "." + tmp[len(tmp)-DECIMALS:len(tmp)]).replace("-.", "-0.")
 
     def __add__(self, other):
         if isinstance(other, Wad):
@@ -47,7 +47,7 @@ class Wad:
 
     def __mul__(self, other):
         if isinstance(other, Wad):
-            result = Decimal(self.value) * Decimal(other.value) / (Decimal(10) ** Decimal(18))
+            result = Decimal(self.value) * Decimal(other.value) / (Decimal(10) ** Decimal(DECIMALS))
             return Wad(int(result.quantize(1, context=_context)))
         elif isinstance(other, int):
             return Wad(int((Decimal(self.value) * Decimal(other)).quantize(1, context=_context)))
@@ -56,7 +56,7 @@ class Wad:
 
     def __truediv__(self, other):
         if isinstance(other, Wad):
-            return Wad(int((Decimal(self.value) * (Decimal(10) ** Decimal(18)) / Decimal(other.value)).quantize(1, context=_context)))
+            return Wad(int((Decimal(self.value) * (Decimal(10) ** Decimal(DECIMALS)) / Decimal(other.value)).quantize(1, context=_context)))
         else:
             raise ArithmeticError
 
@@ -76,10 +76,10 @@ class Wad:
             raise ArithmeticError
 
     def __int__(self):
-        return int(self.value / 10**18)
+        return int(self.value / 10**DECIMALS)
 
     def __float__(self):
-        return self.value / 10**18
+        return self.value / 10**DECIMALS
 
     @staticmethod
     def min(*args):

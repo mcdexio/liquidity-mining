@@ -8,13 +8,11 @@ from watcher import Watcher
 from .types import SyncerInterface
 
 
-class MatureCheck(SyncerInterface):
+class MatureChecker(SyncerInterface):
     """Checking, then convert immature token into mature token
     """
 
-    def __init__(self, begin_block, end_block, mature_confirm_number, checkpoint_interval_number, mining_round):
-        self.begin_block = begin_block
-        self.end_block = end_block
+    def __init__(self, mature_confirm_number, checkpoint_interval_number, mining_round):
         self.mature_confirm_number = mature_confirm_number
         self.checkpoint_interval_number = checkpoint_interval_number
         self.mining_round = mining_round
