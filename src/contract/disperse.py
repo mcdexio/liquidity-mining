@@ -35,7 +35,7 @@ class Disperse(Contract):
     def disperse_token(self, token: Address, addresses: list, amounts: list, user: Address, nonce: int, gasPrice: int):
         amounts_toWad = []
         for amount in amounts:
-            amounts_toWad.append(Wad.from_number(amount))
+            amounts_toWad.append(Wad.from_number(amount).value)
         tx_hash = self.contract.functions.disperseToken(token.address, addresses, amounts_toWad).transact({
             'from': user.address,
             'gasPrice': gasPrice,
