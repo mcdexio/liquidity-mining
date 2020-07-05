@@ -19,11 +19,11 @@ class ERC20Tracer(SyncerInterface):
         self._erc20_token = ERC20Token(
             web3=web3, address=Address(token_address))
 
-    def _add_token_event(self, watcher_id, block_number, block_hash, token_address, event_index, transfer_type, holder, amount, db_session):
+    def _add_token_event(self, watcher_id, block_number, transaction_hash, token_address, event_index, transfer_type, holder, amount, db_session):
         token_event = TokenEvent()
         token_event.watcher_id = watcher_id
         token_event.block_number = block_number
-        token_event.transaction_hash = block_hash
+        token_event.transaction_hash = transaction_hash
         token_event.token = token_address
         token_event.event_index = event_index
         token_event.holder = holder
@@ -31,7 +31,24 @@ class ERC20Tracer(SyncerInterface):
             amount = -amount
         token_event.amount = amount
         db_session.add(token_event)
-        db_session.execute("refresh materialized view token_balances")
+
+        #db_session.execute("refresh materialized view token_balances")
+        # update token_balances table, simulated materialized view
+        token_balance_item = db_session.query(TokenBalance)\
+            .filter(TokenBalance.holder == holder)\
+            .filter(TokenBalance.token == token_address)\
+                .first()
+        if token_balance_item is None:
+            token_balance_item = TokenBalance()
+            token_balance_item.watcher_id = watcher_id
+            token_balance_item.token = token_address
+            token_balance_item.holder = holder
+            token_balance_item.balance = amount
+        else:
+            token_balance_item.balance += amount
+        db_session.add(token_balance_item)
+        
+
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
@@ -74,4 +91,4 @@ class ERC20Tracer(SyncerInterface):
         """delete data after block_number"""
         db_session.query(TokenEvent).filter(TokenEvent.token == self._token_address).filter(TokenEvent.watcher_id == watcher_id).\
             filter(TokenEvent.block_number >= block_number).delete()
-        db_session.execute("refresh materialized view token_balances")        
+        #db_session.execute("refresh materialized view token_balances")        
