@@ -1,5 +1,6 @@
 
 import logging
+import logging.config
 import traceback
 from typing import List
 
@@ -8,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from web3 import Web3
 from web3.types import BlockData
 
+import config
 from model.orm import Watcher as DBWatcher
 from model.orm import WatcherBlock
 from syncer.types import SyncerInterface
@@ -31,7 +33,9 @@ class Watcher:
         self._syncers = syncers
         self._web3 = web3
         self._Session = sessionmaker(bind=db_engine)
-        self._logger = logging.getLogger('watcher[%d]' % self._watcher_id)
+        self._logger = logging.getLogger()
+        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = "./log/watcher.log"
+        logging.config.dictConfig(config.LOG_CONFIG)
 
     def sync(self) -> int:
         """
