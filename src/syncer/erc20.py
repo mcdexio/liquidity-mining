@@ -1,4 +1,5 @@
 from web3 import Web3
+from decimal import Decimal
 
 from contract.erc20 import ERC20Token
 from lib.address import Address
@@ -22,7 +23,7 @@ class ERC20Tracer(SyncerInterface):
         token_event = TokenEvent()
         token_event.watcher_id = watcher_id
         token_event.block_number = block_number
-        token_event.block_hash = block_hash
+        token_event.transaction_hash = block_hash
         token_event.token = token_address
         token_event.event_index = event_index
         token_event.holder = holder
@@ -42,30 +43,31 @@ class ERC20Tracer(SyncerInterface):
             transfer_info = row.args
             from_addr = transfer_info.get('from')
             to_addr = transfer_info.get('to')
-            amount = Wad(transfer_info.get('value'))
+            amount = Decimal(str(Wad(transfer_info.get('value'))))
             cur_block_number = row.blockNumber
-            cur_block_hash = row.blockHash
+            cur_transaction_hash = row.transactionHash
             event_index = row.logIndex
+
 
             if from_addr == '0x0000000000000000000000000000000000000000':
                 transfer_type = 'to'
                 holder = to_addr
-                self._add_token_event(watcher_id, cur_block_number, cur_block_hash,
+                self._add_token_event(watcher_id, cur_block_number, cur_transaction_hash,
                                       self._token_address, event_index, transfer_type, holder, amount, db_session)
             elif to_addr == '0x0000000000000000000000000000000000000000':
                 transfer_type = 'from'
                 holder = from_addr
-                self._add_token_event(watcher_id, cur_block_number, cur_block_hash,
+                self._add_token_event(watcher_id, cur_block_number, cur_transaction_hash,
                                       self._token_address, event_index, transfer_type, holder, amount, db_session)
             else:
                 transfer_type = 'from'
                 holder = from_addr
-                self._add_token_event(watcher_id, cur_block_number, cur_block_hash,
+                self._add_token_event(watcher_id, cur_block_number, cur_transaction_hash,
                                       self._token_address, event_index, transfer_type, holder, amount, db_session)
 
                 transfer_type = 'to'
                 holder = to_addr
-                self._add_token_event(watcher_id, cur_block_number, cur_block_hash,
+                self._add_token_event(watcher_id, cur_block_number, cur_transaction_hash,
                                       self._token_address, event_index, transfer_type, holder, amount, db_session)
 
     def rollback(self, watcher_id, block_number, db_session):

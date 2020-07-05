@@ -14,6 +14,8 @@ class MiningRound(Base):
     round = Column(String, primary_key=True)
     begin_block_number = Column(Integer)
     end_block_number = Column(Integer)
+    release_per_block = Column(Integer)
+    supply = Column(Integer)
     watcher_id = Column(Integer)
 
 

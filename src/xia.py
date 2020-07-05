@@ -26,8 +26,8 @@ def create_watcher():
     session.rollback()
 
     share_token_tracer = ERC20Tracer(config.XIA_SHARE_TOKEN_ADDRESS, web3)
-    miner = ShareMining(mining_round.begin_block, mining_round.end_block,
-                        mining_round.reward_per_block, config.XIA_SHARE_TOKEN_ADDRESS, MINING_ROUND)
+    miner = ShareMining(mining_round.begin_block_number, mining_round.end_block_number,
+                        mining_round.release_per_block, config.XIA_SHARE_TOKEN_ADDRESS, MINING_ROUND)
     mature_checker = MatureChecker(
         config.MATURE_CONFIRM, config.MATURE_CHECKPOINT_INTERVAL, MINING_ROUND)
 
