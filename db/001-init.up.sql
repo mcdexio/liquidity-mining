@@ -39,18 +39,15 @@ CREATE TABLE token_events (
   FOREIGN KEY (watcher_id) REFERENCES watchers (id)
 );
 
-CREATE MATERIALIZED VIEW token_balances AS
-SELECT
-  watcher_id,
-  token,
-  holder,
-  SUM(amount) AS balance
-FROM
-  token_events
-GROUP BY
-  watcher_id,
-  token,
-  holder;
+CREATE TABLE token_balances (
+  token text NOT NULL,
+  holder text NOT NULL,
+  balance numeric(78, 18) NOT NULL,
+  /* positive or negative */
+  watcher_id int NOT NULL,
+  PRIMARY KEY (token, holder),
+  FOREIGN KEY (watcher_id) REFERENCES watchers (id)
+);
 
 CREATE UNIQUE INDEX idx_token_balances_token_holder ON token_balances (token, holder);
 
@@ -62,16 +59,12 @@ CREATE TABLE immature_mining_rewards (
   PRIMARY KEY (block_number, mining_round, holder)
 );
 
-CREATE MATERIALIZED VIEW immature_mining_reward_summaries AS
-SELECT
-  mining_round,
-  holder,
-  SUM(mcb_balance) AS mcb_balance
-FROM
-  immature_mining_rewards
-GROUP BY
-  mining_round,
-  holder;
+CREATE TABLE immature_mining_reward_summaries (
+  mining_round text,
+  holder text,
+  mcb_balance numeric(78, 18) NOT NULL,
+  PRIMARY KEY (mining_round, holder)
+);
 
 CREATE UNIQUE INDEX idx_immature_mining_reward_summaries_mining_round_holder ON immature_mining_reward_summaries (mining_round, holder);
 

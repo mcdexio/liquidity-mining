@@ -55,15 +55,17 @@ class TokenEvent(Base):
 
 
 class TokenBalance(Base):
-    __table__ = Table("token_balances", Base.metadata,
-                      autoload=True, autoload_with=db_engine)
-    __mapper_args__ = {
-        'primary_key': [__table__.c.token, __table__.c.holder]
-    }
-#    watcher_id = Column(Integer)
-#    token = Column(String)
-#    holder = Column(String)
-#    balance = Column(DECIMAL(78, 18))
+    # __table__ = Table("token_balances", Base.metadata,
+    #                   autoload=True, autoload_with=db_engine)
+    # __mapper_args__ = {
+    #     'primary_key': [__table__.c.token, __table__.c.holder]
+    # }
+    __tablename__ = "token_balances"
+
+    watcher_id = Column(Integer)
+    token = Column(String, primary_key=True)
+    holder = Column(String, primary_key=True)
+    balance = Column(DECIMAL(78, 18))
 
 
 class ImmatureMiningReward(Base):
@@ -76,15 +78,16 @@ class ImmatureMiningReward(Base):
 
 
 class ImmatureMiningRewardSummary(Base):
-    __table__ = Table("immature_mining_reward_summaries",
-                      Base.metadata, autoload=True, autoload_with=db_engine)
-    __mapper_args__ = {
-        'primary_key': [__table__.c.mining_round, __table__.c.holder]
-    }
+    # __table__ = Table("immature_mining_reward_summaries",
+    #                   Base.metadata, autoload=True, autoload_with=db_engine)
+    # __mapper_args__ = {
+    #     'primary_key': [__table__.c.mining_round, __table__.c.holder]
+    # }
+    __tablename__ = "immature_mining_reward_summaries"
 
-    # mining_round = Column(String)
-    # holder = Column(String)
-    # mcb_balance = Column(DECIMAL(78, 18))
+    mining_round = Column(String, primary_key=True)
+    holder = Column(String, primary_key=True)
+    mcb_balance = Column(DECIMAL(78, 18))
 
 
 class MatureMiningReward(Base):
