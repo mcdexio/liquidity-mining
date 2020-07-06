@@ -66,7 +66,7 @@ class Watcher:
                 synced_block_number -= 1
 
             if synced_block_number != db_watcher.synced_block_number:
-                self._rollback(synced_block_number, db_session, db_watcher)
+                self._rollback(db_watcher, synced_block_number, db_session)
             to_sync = synced_block_number + 1
             if self._end_block_number > 0 and to_sync > self._end_block_number + config.MATURE_CONFIRM:
                 self._logger.warning('reach end of the watcher: end block[%d], synced block[%d]', self._end_block_number, synced_block_number)
