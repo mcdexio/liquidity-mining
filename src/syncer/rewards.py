@@ -40,10 +40,10 @@ class ShareMining(SyncerInterface):
             .with_entities(
                 func.sum(TokenBalance.balance).label('amount')
         ).first()
-        if result is None:
+        if result[0] is None:
             self._logger.error(f'opps, token_balance is empty!')
             return
-        total_share_token_amount = Decimal(result.amount)
+        total_share_token_amount = Decimal(result[0].amount)
 
         items = db_session.query(TokenEvent)\
             .filter(TokenEvent.token == self._share_token_address)\
