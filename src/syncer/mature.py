@@ -94,7 +94,7 @@ class MatureChecker(SyncerInterface):
                 mature_mining_reward.mcb_balance = item.amount
             else:
                 mature_mining_reward.block_number = addup_end_block_number
-                mature_mining_reward.mcb_balance = item.amount
+                mature_mining_reward.mcb_balance += item.amount
 
             db_session.add(mature_mining_reward)
 
