@@ -52,7 +52,7 @@ class MatureChecker(SyncerInterface):
             .filter(MatureMiningRewardCheckpoint.mining_round == self._mining_round)\
             .order_by(desc(MatureMiningRewardCheckpoint.block_number))\
             .with_entities(
-                MatureMiningReward.block_number
+                MatureMiningRewardCheckpoint.block_number
         ).first()
         if result:
             latest_block_number = result.block_number
