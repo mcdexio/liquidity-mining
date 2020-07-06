@@ -7,7 +7,7 @@
 - Total Supply: 410,000 MCB
 - Release: 2 MCB / Block
 - Begin Block: 10,420,000
-- End Block: 10,620,000
+- End Block: 10,624,999
 
 #### Distribution
 
