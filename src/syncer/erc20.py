@@ -40,6 +40,24 @@ class ERC20Tracer(SyncerInterface):
         token_event.amount = amount
         db_session.add(token_event)
 
+        #db_session.execute("refresh materialized view token_balances")
+        # update token_balances table, simulated materialized view
+        token_balance_item = db_session.query(TokenBalance)\
+            .filter(TokenBalance.holder == holder)\
+            .filter(TokenBalance.token == token_address)\
+                .first()
+        if token_balance_item is None:
+            token_balance_item = TokenBalance()
+            token_balance_item.watcher_id = watcher_id
+            token_balance_item.token = token_address
+            token_balance_item.holder = holder
+            token_balance_item.balance = amount
+        else:
+            token_balance_item.balance += amount
+        db_session.add(token_balance_item)
+        
+
+
         # update token_balances table, simulated materialized view
         token_balance_item = db_session.query(TokenBalance)\
             .filter(TokenBalance.holder == holder)\
