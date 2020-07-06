@@ -30,8 +30,8 @@ class MatureChecker(SyncerInterface):
             .with_entities(
                 ImmatureMiningReward.block_number
         ).first()
-        if result[0] is not None:
-            latest_block_number = result[0].block_number
+        if result is not None:
+            latest_block_number = result.block_number
         return latest_block_number
 
     def _get_mature_mining_reward_latest_block_number(self, db_session):
@@ -42,8 +42,8 @@ class MatureChecker(SyncerInterface):
             .with_entities(
                 MatureMiningReward.block_number
         ).first()
-        if result[0]:
-            latest_block_number = result[0].block_number
+        if result:
+            latest_block_number = result.block_number
         return latest_block_number
 
     def _get_mature_mining_reward_checkpoint_latest_block_number(self, db_session):
@@ -54,8 +54,8 @@ class MatureChecker(SyncerInterface):
             .with_entities(
                 MatureMiningReward.block_number
         ).first()
-        if result[0]:
-            latest_block_number = result[0].block_number
+        if result:
+            latest_block_number = result.block_number
         return latest_block_number
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
