@@ -66,8 +66,7 @@ class MatureChecker(SyncerInterface):
             db_session)
         if (immature_latest_block_number - mature_latest_block_number) < self._mature_confirm_number:
             # not meet mature requirements
-            self._logger.info(f'immature_block_number:{immature_latest_block_number}, mature_block_number:{mature_latest_block_number}, \
-                    no mature block, waiting...')
+            self._logger.info(f'immature_block_number:{immature_latest_block_number}, mature_block_number:{mature_latest_block_number}, no mature block, waiting...')
             return
 
         addup_begin_block_number = mature_latest_block_number
