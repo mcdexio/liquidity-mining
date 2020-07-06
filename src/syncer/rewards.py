@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from contract.erc20 import ERC20Token
 from lib.address import Address
+from lib.wad import Wad
 from model.orm import ImmatureMiningReward, TokenEvent, ImmatureMiningRewardSummary, TokenBalance
 from watcher import Watcher
 
@@ -27,15 +28,13 @@ class ShareMining(SyncerInterface):
         self._mining_round = mining_round
 
         self._logger = logging.getLogger()
-        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = config.SYNCER_LOGPATH
-        logging.config.dictConfig(config.LOG_CONFIG)
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
+        """Sync data"""
         if block_number < self._begin_block or block_number >self._end_block:
             self._logger.info(f'block_number {block_number} not in mining window!')
             return
         
-        """Sync data"""
         result = db_session.query(TokenBalance)\
             .filter(TokenBalance.token == self._share_token_address)\
             .with_entities(
@@ -58,7 +57,8 @@ class ShareMining(SyncerInterface):
         for item in items:
             holder = item.holder
             holder_share_token_amount = Decimal(item.amount)
-            reward = self._reward_per_block * holder_share_token_amount / total_share_token_amount
+            wad_reward = Wad.from_number(self._reward_per_block) * Wad.from_number(holder_share_token_amount) / Wad.from_number(total_share_token_amount)
+            reward = Decimal(str(wad_reward))
 
             immature_mining_reward = ImmatureMiningReward()
             immature_mining_reward.block_number = block_number

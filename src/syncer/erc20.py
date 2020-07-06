@@ -24,10 +24,7 @@ class ERC20Tracer(SyncerInterface):
             web3=web3, address=Address(token_address))
         self._erc20_decimals = self._erc20_token.decimals
         self._logger = logging.getLogger()
-        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = config.SYNCER_LOGPATH
-        logging.config.dictConfig(config.LOG_CONFIG)
     
-
     def _add_token_event(self, watcher_id, block_number, transaction_hash, token_address, event_index, transfer_type, holder, amount, db_session):
         token_event = TokenEvent()
         token_event.watcher_id = watcher_id

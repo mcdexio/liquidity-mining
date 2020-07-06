@@ -20,9 +20,7 @@ class MatureChecker(SyncerInterface):
         self._checkpoint_interval_number = checkpoint_interval_number
         self._mining_round = mining_round
 
-        self._logger = logging.getLogger()
-        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = config.SYNCER_LOGPATH
-        logging.config.dictConfig(config.LOG_CONFIG)        
+        self._logger = logging.getLogger()    
 
     def _get_immature_mining_reward_latest_block_number(self, db_session):
         latest_block_number = 0
