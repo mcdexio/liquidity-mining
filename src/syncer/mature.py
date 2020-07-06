@@ -68,7 +68,7 @@ class MatureChecker(SyncerInterface):
             db_session)
         if (immature_latest_block_number - mature_latest_block_number) < self._mature_confirm_number:
             # not meet mature requirements
-            self._logger(f'immature_block_number:{immature_latest_block_number}, mature_block_number:{mature_latest_block_number}, \
+            self._logger.info(f'immature_block_number:{immature_latest_block_number}, mature_block_number:{mature_latest_block_number}, \
                     no mature block, waiting...')
             return
 
@@ -105,7 +105,7 @@ class MatureChecker(SyncerInterface):
         checkpoint_latest_block_number = self._get_mature_mining_reward_checkpoint_latest_block_number(
             db_session)
         if (addup_end_block_number - checkpoint_latest_block_number) >= self._checkpoint_interval_number:
-            self._logger(f'save checkpoint block_number:{addup_end_block_number}')
+            self._logger.info(f'save checkpoint block_number:{addup_end_block_number}')
             items = db_session.query(MatureMiningReward).filter(
                 MatureMiningReward.block_number == addup_end_block_number).all()
             for item in items:
@@ -124,7 +124,7 @@ class MatureChecker(SyncerInterface):
             db_session)
         if mature_latest_block_number < block_number:
             # mature_mining_reward record before block_number, no need rollback
-            self._logger(f'no need rollback, mature_block_number < rollback_block_number')
+            self._logger.info(f'no need rollback, mature_block_number < rollback_block_number')
             return
         else:
             db_session.query(MatureMiningReward).filter(
@@ -137,7 +137,7 @@ class MatureChecker(SyncerInterface):
             checkpoint_latest_block_number = self._get_mature_mining_reward_checkpoint_latest_block_number(
                 db_session)
             # rollback mature_mining_reward record to latest correct checkpoint
-            self._logger(f'rollback mature_mining_reward block_number from {mature_latest_block_number} to {checkpoint_latest_block_number}')
+            self._logger.info(f'rollback mature_mining_reward block_number from {mature_latest_block_number} to {checkpoint_latest_block_number}')
             items = db_session.query(MatureMiningRewardCheckpoint)\
                 .filter(MatureMiningRewardCheckpoint.mining_round == self._mining_round)\
                 .filter(MatureMiningRewardCheckpoint.block_number == checkpoint_latest_block_number)\

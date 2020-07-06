@@ -31,12 +31,19 @@ class ShareMining(SyncerInterface):
         logging.config.dictConfig(config.LOG_CONFIG)
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
+        if block_number < self._begin_block or block_number >self._end_block:
+            self._logger.info(f'block_number {block_number} not in mining window!')
+            return
+        
         """Sync data"""
         result = db_session.query(TokenBalance)\
             .filter(TokenBalance.token == self._share_token_address)\
             .with_entities(
                 func.sum(TokenBalance.balance).label('amount')
-        ).first()   
+        ).first()
+        if result is None:
+            self._logger.error(f'opps, token_balance is empty!')
+            return
         total_share_token_amount = Decimal(result.amount)
 
         items = db_session.query(TokenEvent)\
@@ -47,7 +54,7 @@ class ShareMining(SyncerInterface):
                 TokenEvent.holder,
                 func.sum(TokenEvent.amount).label('amount')
         ).all()
-        self._logger(f'sync mining reward, block_number:{block_number}, holders:{len(items)}')
+        self._logger.info(f'sync mining reward, block_number:{block_number}, holders:{len(items)}')
         for item in items:
             holder = item.holder
             holder_share_token_amount = Decimal(item.amount)
@@ -62,7 +69,7 @@ class ShareMining(SyncerInterface):
 
     def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
-        self._logger(f'rollback immature_mining_reward block_number back to {block_number}')
+        self._logger.info(f'rollback immature_mining_reward block_number back to {block_number}')
         items = db_session.query(ImmatureMiningReward)\
             .filter(ImmatureMiningReward.block_number >= block_number)\
             .group_by(ImmatureMiningReward.mining_round, ImmatureMiningReward.holder)\

@@ -62,7 +62,7 @@ class ERC20Tracer(SyncerInterface):
         transfer_filter = self._erc20_token.contract.events.Transfer().createFilter(
             fromBlock=Web3.toHex(block_number), toBlock=Web3.toHex(block_number))
         all_filter_events = transfer_filter.get_all_entries()
-        self._logger(f'sync erc20 event, block_number:{block_number}, events:{len(all_filter_events)}')
+        self._logger.info(f'sync erc20 event, block_number:{block_number}, events:{len(all_filter_events)}')
         for row in all_filter_events:
             transfer_info = row.args
             from_addr = transfer_info.get('from')
@@ -95,7 +95,7 @@ class ERC20Tracer(SyncerInterface):
 
     def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
-        self._logger(f'rollback erc20 block_number back to {block_number}')
+        self._logger.info(f'rollback erc20 block_number back to {block_number}')
         items = db_session.query(TokenEvent)\
             .filter(TokenEvent.block_number >= block_number)\
             .group_by(TokenEvent.token, TokenEvent.holder)\
