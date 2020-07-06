@@ -3,6 +3,7 @@ import time
 
 from sqlalchemy.orm import sessionmaker
 from web3 import HTTPProvider, Web3
+from web3.middleware import construct_sign_and_send_raw_middleware, geth_poa_middleware
 
 import config
 from model.db import db_engine
@@ -18,7 +19,7 @@ MINING_ROUND = 'XIA'
 def create_watcher():
     web3 = Web3(HTTPProvider(endpoint_uri=config.ETH_RPC_URL,
                              request_kwargs={"timeout": config.ETH_RPC_TIMEOUT}))
-
+    web3.middleware_onion.inject(geth_poa_middleware, layer=0)
     Session = sessionmaker(bind=db_engine)
     session = Session()
     mining_round = session.query(MiningRound).filter(
