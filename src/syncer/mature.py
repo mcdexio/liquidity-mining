@@ -1,6 +1,9 @@
 from sqlalchemy import desc, func
+import logging
+import logging.config
+from decimal import Decimal
 
-from lib.wad import Wad
+import config
 from model.orm import (ImmatureMiningReward, MatureMiningReward,
                        MatureMiningRewardCheckpoint)
 from watcher import Watcher
@@ -13,14 +16,18 @@ class MatureChecker(SyncerInterface):
     """
 
     def __init__(self, mature_confirm_number, checkpoint_interval_number, mining_round):
-        self.mature_confirm_number = mature_confirm_number
-        self.checkpoint_interval_number = checkpoint_interval_number
-        self.mining_round = mining_round
+        self._mature_confirm_number = mature_confirm_number
+        self._checkpoint_interval_number = checkpoint_interval_number
+        self._mining_round = mining_round
+
+        self._logger = logging.getLogger()
+        config.LOG_CONFIG["handlers"]["file_handler"]["filename"] = config.SYNCER_LOGPATH
+        logging.config.dictConfig(config.LOG_CONFIG)        
 
     def _get_immature_mining_reward_latest_block_number(self, db_session):
         latest_block_number = 0
         result = db_session.query(ImmatureMiningReward)\
-            .filter(ImmatureMiningReward.mining_round == self.mining_round)\
+            .filter(ImmatureMiningReward.mining_round == self._mining_round)\
             .order_by(desc(ImmatureMiningReward.block_number))\
             .with_entities(
                 ImmatureMiningReward.block_number
@@ -32,7 +39,7 @@ class MatureChecker(SyncerInterface):
     def _get_mature_mining_reward_latest_block_number(self, db_session):
         latest_block_number = 0
         result = db_session.query(MatureMiningReward)\
-            .filter(MatureMiningReward.mining_round == self.mining_round)\
+            .filter(MatureMiningReward.mining_round == self._mining_round)\
             .order_by(desc(MatureMiningReward.block_number))\
             .with_entities(
                 MatureMiningReward.block_number
@@ -44,7 +51,7 @@ class MatureChecker(SyncerInterface):
     def _get_mature_mining_reward_checkpoint_latest_block_number(self, db_session):
         latest_block_number = 0
         result = db_session.query(MatureMiningRewardCheckpoint)\
-            .filter(MatureMiningRewardCheckpoint.mining_round == self.mining_round)\
+            .filter(MatureMiningRewardCheckpoint.mining_round == self._mining_round)\
             .order_by(desc(MatureMiningRewardCheckpoint.block_number))\
             .with_entities(
                 MatureMiningReward.block_number
@@ -59,22 +66,24 @@ class MatureChecker(SyncerInterface):
             db_session)
         mature_latest_block_number = self._get_mature_mining_reward_latest_block_number(
             db_session)
-        if (immature_latest_block_number - mature_latest_block_number) < self.mature_confirm_number:
+        if (immature_latest_block_number - mature_latest_block_number) < self._mature_confirm_number:
             # not meet mature requirements
+            self._logger(f'immature_block_number:{immature_latest_block_number}, mature_block_number:{mature_latest_block_number}, \
+                    no mature block, waiting...')
             return
 
         addup_begin_block_number = mature_latest_block_number
-        addup_end_block_number = immature_latest_block_number - self.mature_confirm_number
+        addup_end_block_number = immature_latest_block_number - self._mature_confirm_number
 
         items = db_session.query(ImmatureMiningReward)\
-            .filter(ImmatureMiningReward.mining_round == self.mining_round)\
+            .filter(ImmatureMiningReward.mining_round == self._mining_round)\
             .filter(ImmatureMiningReward.block_number <= addup_end_block_number)\
             .filter(ImmatureMiningReward.block_number > addup_begin_block_number)\
             .group_by(ImmatureMiningReward.holder)\
             .with_entities(
                 ImmatureMiningReward.holder,
                 func.sum(ImmatureMiningReward.mcb_balance).label('amount')
-        )\
+            )\
             .all()
         for item in items:
             holder = item.holder
@@ -83,7 +92,7 @@ class MatureChecker(SyncerInterface):
             if mature_mining_reward is None:
                 mature_mining_reward = MatureMiningReward()
                 mature_mining_reward.block_number = addup_end_block_number
-                mature_mining_reward.mining_round = self.mining_round
+                mature_mining_reward.mining_round = self._mining_round
                 mature_mining_reward.holder = holder
                 mature_mining_reward.mcb_balance = item.amount
             else:
@@ -91,12 +100,12 @@ class MatureChecker(SyncerInterface):
                 mature_mining_reward.mcb_balance = item.amount
 
             db_session.add(mature_mining_reward)
-            db_session.execute("refresh materialized view immature_mining_reward_summaries")
 
         # save checkpoint
         checkpoint_latest_block_number = self._get_mature_mining_reward_checkpoint_latest_block_number(
             db_session)
-        if (addup_end_block_number - checkpoint_latest_block_number) >= self.checkpoint_interval_number:
+        if (addup_end_block_number - checkpoint_latest_block_number) >= self._checkpoint_interval_number:
+            self._logger(f'save checkpoint block_number:{addup_end_block_number}')
             items = db_session.query(MatureMiningReward).filter(
                 MatureMiningReward.block_number == addup_end_block_number).all()
             for item in items:
@@ -115,6 +124,7 @@ class MatureChecker(SyncerInterface):
             db_session)
         if mature_latest_block_number < block_number:
             # mature_mining_reward record before block_number, no need rollback
+            self._logger(f'no need rollback, mature_block_number < rollback_block_number')
             return
         else:
             db_session.query(MatureMiningReward).filter(
@@ -127,8 +137,9 @@ class MatureChecker(SyncerInterface):
             checkpoint_latest_block_number = self._get_mature_mining_reward_checkpoint_latest_block_number(
                 db_session)
             # rollback mature_mining_reward record to latest correct checkpoint
+            self._logger(f'rollback mature_mining_reward block_number from {mature_latest_block_number} to {checkpoint_latest_block_number}')
             items = db_session.query(MatureMiningRewardCheckpoint)\
-                .filter(MatureMiningRewardCheckpoint.mining_round == self.mining_round)\
+                .filter(MatureMiningRewardCheckpoint.mining_round == self._mining_round)\
                 .filter(MatureMiningRewardCheckpoint.block_number == checkpoint_latest_block_number)\
                 .all()
             for item in items:

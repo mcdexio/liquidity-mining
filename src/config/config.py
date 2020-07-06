@@ -36,6 +36,7 @@ XIA_SHARE_TOKEN_ADDRESS = "0xAe694FB9DCD1E6195519c0056B2aB19380B26FF2"
 # log
 PAYER_LOGPATH = "./log/payer.log"
 WATCHER_LOGPATH = "./log/watcher.log"
+SYNCER_LOGPATH = "./log/syncer.log"
 
 LOG_CONFIG = {
     "version": 1,
