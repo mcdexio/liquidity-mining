@@ -105,7 +105,6 @@ class PaymentTransaction(Base):
     PENDING = "PENDING"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    transaction_nonce = Column(Integer)
     transaction_data = Column(String)
     transaction_hash = Column(String, nullable=True)
     status = Column(String, nullable=True)

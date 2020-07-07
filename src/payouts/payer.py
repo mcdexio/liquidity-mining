@@ -30,10 +30,7 @@ class Payer:
         self._web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         self._gas_price = self._web3.toWei(10, "gwei")
         self._get_gas_price()
-        self._nonce = 0
         self._payer_account = None
-        # init payer transaction nonce
-        self._init_payer_nonce()
 
         # contract
         self._disperse = Disperse(
@@ -51,15 +48,6 @@ class Payer:
                 self._logger.info(f"new gas price: {self.gas_price}")
         except Exception as e:
             self._logger.fatal(f"get gas price error {e}")
-
-    def _init_payer_nonce(self):
-        db_session = DBSession()
-        latest_transaction = db_session.query(PaymentTransaction).order_by(desc(PaymentTransaction.transaction_nonce)).first()
-        if latest_transaction is None:
-            count = self._web3.eth.getTransactionCount(config.PAYER_ADDRESS)
-            self._nonce = count+1
-        else:
-            self._nonce = latest_transaction.transaction_nonce+1
 
     def _check_account_from_key(self):
         try:
@@ -99,7 +87,6 @@ class Payer:
         db_session = DBSession()
         try:
             pt = PaymentTransaction()
-            pt.transaction_nonce = self._nonce
             data = {
                 "miners": miners,
                 "amounts": amounts_str,
@@ -228,7 +215,6 @@ class Payer:
         self._get_gas_price()
         # send MCB to all accounts
         for i in range(math.ceil(miners_count/config.MAX_PATCH_NUM)):
-            self._nonce = self._nonce+1
             start_idx = i*config.MAX_PATCH_NUM
             end_idx = min((i+1)*config.MAX_PATCH_NUM, miners_count)
             self._logger.info(f"miners count: {miners_count}, send from {start_idx} to {end_idx}")
@@ -237,7 +223,7 @@ class Payer:
             amounts = unpaid_rewards["amounts"][start_idx:end_idx]
             try:
                 tx_hash = self._disperse.disperse_token(self._MCBToken.address, miners, amounts,
-                    self._payer_account, self._nonce, self._gas_price)
+                    self._payer_account, self._gas_price)
                 self._save_payment_transaction(self._web3.toHex(tx_hash), miners, amounts)
             except Exception as e:
                 self._logger.fatal(f"disperse transaction fail! Exception:{e}")

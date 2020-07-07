@@ -81,7 +81,6 @@ CREATE TABLE mature_mining_reward_checkpoints (
 
 CREATE TABLE payment_transactions (
   id serial PRIMARY KEY,
-  transaction_nonce int NOT NULL,
   transaction_data text NOT NULL,
   transaction_hash text,
   status text NOT NULL
