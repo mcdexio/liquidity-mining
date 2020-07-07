@@ -62,8 +62,8 @@ class ERC20Tracer(SyncerInterface):
         self._logger.info(f'sync erc20 event, block_number:{block_number}, events:{len(all_filter_events)}')
         for row in all_filter_events:
             transfer_info = row.args
-            from_addr = transfer_info.get('from')
-            to_addr = transfer_info.get('to')
+            from_addr = transfer_info.get('from').lower()
+            to_addr = transfer_info.get('to').lower()
             amount = Decimal(transfer_info.get('value'))/Decimal(10**self._erc20_decimals)
             cur_block_number = row.blockNumber
             cur_transaction_hash = row.transactionHash
