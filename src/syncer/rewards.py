@@ -2,7 +2,7 @@ import logging
 import logging.config
 from sqlalchemy import func
 from web3 import Web3
-from decimal import Decimal
+from decimal import Decimal, getcontext, ROUND_DOWN
 
 from contract.erc20 import ERC20Token
 from lib.address import Address
@@ -38,7 +38,7 @@ class ShareMining(SyncerInterface):
         result = db_session.query(TokenBalance)\
             .filter(TokenBalance.token == self._share_token_address)\
             .with_entities(
-                func.sum(TokenBalance.balance).label('amount')
+                func.sum(TokenBalance.balance)
         ).first()
         if result[0] is None:
             self._logger.error(f'opps, token_balance is empty!')
@@ -66,6 +66,20 @@ class ShareMining(SyncerInterface):
             immature_mining_reward.holder = holder
             immature_mining_reward.mcb_balance = reward
             db_session.add(immature_mining_reward)
+
+            # update immature_mining_reward_summaries table, simulated materialized view
+            immature_summary_item = db_session.query(ImmatureMiningRewardSummary)\
+                .filter(ImmatureMiningRewardSummary.mining_round == self._mining_round)\
+                .filter(ImmatureMiningRewardSummary.holder == holder)\
+                    .first()
+            if immature_summary_item is None:
+                immature_summary_item = ImmatureMiningRewardSummary()
+                immature_summary_item.mining_round = self._mining_round
+                immature_summary_item.holder = holder
+                immature_summary_item.mcb_balance = reward
+            else:
+                immature_summary_item.balance += reward
+            db_session.add(immature_summary_item)
 
     def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
