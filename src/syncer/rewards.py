@@ -78,7 +78,7 @@ class ShareMining(SyncerInterface):
                 immature_summary_item.holder = holder
                 immature_summary_item.mcb_balance = reward
             else:
-                immature_summary_item.balance += reward
+                immature_summary_item.mcb_balance += reward
             db_session.add(immature_summary_item)
 
     def rollback(self, watcher_id, block_number, db_session):
