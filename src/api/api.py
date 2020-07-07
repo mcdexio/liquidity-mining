@@ -28,7 +28,7 @@ def get_watchers():
         joinedload(Watcher.mining_rounds)).all()
     result = []
     for w in watchers:
-        result.append(_get_fields(w))
+        result.append(_get_fields(w, ['watcher_blocks']))
         result[-1]['mining_rounds'] = [_get_fields(
             r, ['watcher', 'watcher_id']) for r in w.mining_rounds]
 
