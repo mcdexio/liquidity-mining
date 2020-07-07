@@ -76,7 +76,7 @@ class Watcher:
                 self._sync(db_watcher, new_block, db_session)
                 result = to_sync
             db_session.commit()
-            if result:
+            if result > 0:
                 self._logger.info('sync block[%d] hash[%s]', new_block.number, new_block.hash)
         except:
             result = -1
