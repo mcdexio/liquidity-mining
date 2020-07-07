@@ -125,7 +125,7 @@ class Payer:
                 for i in range(len(miners)):
                     # save payments
                     p = Payment()
-                    p.holder = miners[i]
+                    p.holder = miners[i].lower()
                     p.amount = amounts[i]
                     p.pay_time = datetime.datetime.utcnow()
                     p.transaction_id = pt.id
@@ -134,7 +134,7 @@ class Payer:
                     # save round payments
                     rp = RoundPayment()
                     rp.mining_round = config.MINING_ROUND
-                    rp.holder = miners[i]
+                    rp.holder = miners[i].lower()
                     rp.amount = amounts[i]
                     rp.transaction_id = pt.id
                     db_session.add(rp)
