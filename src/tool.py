@@ -13,13 +13,20 @@ class AlchemyEncoder(json.JSONEncoder):
             for field in [x for x in dir(obj) if not x.startswith('_') and x != 'metadata']:
                 data = obj.__getattribute__(field)
                 try:
-                    json.dumps(data)     # this will fail on non-encodable values, like other classes
+                    json.dumps(data)
                     fields[field] = data
                 except TypeError:
                         fields[field] = None
             # a json-encodable dict
             return fields
         return json.JSONEncoder.default(self, obj)
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        super(DecimalEncoder, self).default(obj)
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -44,7 +51,7 @@ def main():
         print(json.dumps(watchers, cls=AlchemyEncoder, indent=4))
     elif args.which == 'reward':
         rewards = get_user_rewards(args.address)
-        print(json.dumps(rewards, indent=4))
+        print(json.dumps(rewards,  cls=DecimalEncoder, indent=4))
     else:
         parser.print_help()
 
