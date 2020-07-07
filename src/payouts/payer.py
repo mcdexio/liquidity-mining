@@ -199,7 +199,7 @@ class Payer:
             unpaid = item.mcb_balance
             if item.paid_amount is not None:
                 unpaid = item.mcb_balance - item.paid_amount
-            if unpaid > Decimal(1):
+            if unpaid >= Decimal(1):
                 result["miners"].append(item.holder)
                 result["amounts"].append(unpaid)
                 self._logger.info(f'miner {item.holder} unpaid rewards {unpaid}')
