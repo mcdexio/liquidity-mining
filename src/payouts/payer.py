@@ -29,7 +29,6 @@ class Payer:
                         request_kwargs={"timeout": config.ETH_RPC_TIMEOUT}))
         self._web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         self._gas_price = self._web3.toWei(10, "gwei")
-        self._get_gas_price()
         self._payer_account = None
 
         # contract
@@ -186,7 +185,7 @@ class Payer:
             unpaid = item.mcb_balance
             if item.paid_amount is not None:
                 unpaid = item.mcb_balance - item.paid_amount
-            if unpaid >= Decimal(1):
+            if unpaid >= Decimal(config.MIN_PAY_AMOUNT):
                 result["miners"].append(self._web3.toChecksumAddress(item.holder))
                 result["amounts"].append(unpaid)
                 self._logger.info(f'miner {item.holder} unpaid rewards {unpaid}')
