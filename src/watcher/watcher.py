@@ -122,8 +122,8 @@ class Watcher:
             syncer.sync(self._watcher_id, block.number, block_hash, db_session)
 
     def _rollback(self, db_watcher: DBWatcher, synced_block_number: int, db_session):
-        db_watcher.synced_block_number = synced_block_number - 1
+        db_watcher.synced_block_number = synced_block_number
         db_session.query(WatcherBlock).filter(WatcherBlock.watcher_id == self._watcher_id).filter(
-            WatcherBlock.block_number >= synced_block_number).delete()
+            WatcherBlock.block_number > synced_block_number).delete()
         for syncer in self._syncers:
             syncer.rollback(self._watcher_id, synced_block_number, db_session)
