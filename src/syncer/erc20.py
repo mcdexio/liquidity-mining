@@ -94,7 +94,7 @@ class ERC20Tracer(SyncerInterface):
         """delete data after block_number"""
         self._logger.info(f'rollback erc20 block_number back to {block_number}')
         items = db_session.query(TokenEvent)\
-            .filter(TokenEvent.block_number >= block_number)\
+            .filter(TokenEvent.block_number > block_number)\
             .group_by(TokenEvent.token, TokenEvent.holder)\
             .with_entities(
                 TokenEvent.token,
@@ -114,6 +114,6 @@ class ERC20Tracer(SyncerInterface):
                 db_session.add(token_balance_item)
         
         db_session.query(TokenEvent).filter(TokenEvent.token == self._token_address).filter(TokenEvent.watcher_id == watcher_id).\
-            filter(TokenEvent.block_number >= block_number).delete()
+            filter(TokenEvent.block_number > block_number).delete()
  
         

@@ -85,7 +85,7 @@ class ShareMining(SyncerInterface):
         """delete data after block_number"""
         self._logger.info(f'rollback immature_mining_reward block_number back to {block_number}')
         items = db_session.query(ImmatureMiningReward)\
-            .filter(ImmatureMiningReward.block_number >= block_number)\
+            .filter(ImmatureMiningReward.block_number > block_number)\
             .group_by(ImmatureMiningReward.mining_round, ImmatureMiningReward.holder)\
             .with_entities(
                 ImmatureMiningReward.mining_round,
@@ -105,4 +105,4 @@ class ShareMining(SyncerInterface):
                 db_session.add(summary_item)
 
         db_session.query(ImmatureMiningReward).filter(
-            ImmatureMiningReward.block_number >= block_number).delete()
+            ImmatureMiningReward.block_number > block_number).delete()
