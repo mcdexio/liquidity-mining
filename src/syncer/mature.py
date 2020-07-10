@@ -22,18 +22,6 @@ class MatureChecker(SyncerInterface):
 
         self._logger = logging.getLogger()    
 
-    def _get_immature_mining_reward_latest_block_number(self, db_session):
-        latest_block_number = 0
-        result = db_session.query(ImmatureMiningReward)\
-            .filter(ImmatureMiningReward.mining_round == self._mining_round)\
-            .order_by(desc(ImmatureMiningReward.block_number))\
-            .with_entities(
-                ImmatureMiningReward.block_number
-        ).first()
-        if result is not None:
-            latest_block_number = result.block_number
-        return latest_block_number
-
     def _get_mature_mining_reward_latest_block_number(self, db_session):
         latest_block_number = 0
         result = db_session.query(MatureMiningReward)\
@@ -60,18 +48,24 @@ class MatureChecker(SyncerInterface):
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
-        immature_latest_block_number = self._get_immature_mining_reward_latest_block_number(
-            db_session)
+        latest_block_number = block_number
         mature_latest_block_number = self._get_mature_mining_reward_latest_block_number(
             db_session)
-        if (immature_latest_block_number - mature_latest_block_number) < self._mature_confirm_number:
+        if (latest_block_number - mature_latest_block_number) < self._mature_confirm_number:
             # not meet mature requirements
-            self._logger.info(f'immature_block_number:{immature_latest_block_number}, mature_block_number:{mature_latest_block_number}, no mature block, waiting...')
+            self._logger.info(f'latest_block_number:{latest_block_number}, mature_block_number:{mature_latest_block_number}, no mature block, waiting...')
             return
 
-        addup_begin_block_number = mature_latest_block_number
-        addup_end_block_number = immature_latest_block_number - self._mature_confirm_number
+        # get all mature summary items
+        mature_mining_reward_dict = {}
+        mature_mining_reward_items = db_session.query(MatureMiningReward)\
+            .filter(MatureMiningReward.mining_round == self._mining_round)\
+            .all()
+        for item in mature_mining_reward_items:
+            mature_mining_reward_dict[item.holder] = item    
 
+        addup_begin_block_number = mature_latest_block_number
+        addup_end_block_number = latest_block_number - self._mature_confirm_number
         items = db_session.query(ImmatureMiningReward)\
             .filter(ImmatureMiningReward.mining_round == self._mining_round)\
             .filter(ImmatureMiningReward.block_number <= addup_end_block_number)\
@@ -84,18 +78,16 @@ class MatureChecker(SyncerInterface):
             .all()
         for item in items:
             holder = item.holder
-            mature_mining_reward = db_session.query(MatureMiningReward).filter(
-                MatureMiningReward.holder == holder).first()
-            if mature_mining_reward is None:
+            if holder not in mature_mining_reward_dict.keys():
                 mature_mining_reward = MatureMiningReward()
                 mature_mining_reward.block_number = addup_end_block_number
                 mature_mining_reward.mining_round = self._mining_round
                 mature_mining_reward.holder = holder
                 mature_mining_reward.mcb_balance = item.amount
             else:
+                mature_mining_reward = mature_mining_reward_dict[holder]
                 mature_mining_reward.block_number = addup_end_block_number
                 mature_mining_reward.mcb_balance += item.amount
-
             db_session.add(mature_mining_reward)
 
         # save checkpoint
