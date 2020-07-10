@@ -77,7 +77,7 @@ class Watcher:
                 result = to_sync
             db_session.commit()
             if result > 0:
-                self._logger.info('sync block[%d] hash[%s]', new_block.number, new_block.hash)
+                self._logger.info('sync block[%d] hash[%s]', new_block.number, Web3.toHex(new_block.hash))
         except:
             result = -1
             self._logger.warning('sync error', exec_info=1, stack_info=1)
