@@ -31,7 +31,7 @@ class ShareMining(SyncerInterface):
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
-        if block_number < self._begin_block or block_number >self._end_block:
+        if block_number < self._begin_block or block_number > self._end_block:
             self._logger.info(f'block_number {block_number} not in mining window!')
             return
         
@@ -44,6 +44,14 @@ class ShareMining(SyncerInterface):
             self._logger.error(f'opps, token_balance is empty!')
             return
         total_share_token_amount = result[0]
+
+        # get all immature summary items
+        immature_summary_dict = {}
+        immature_summary_items = db_session.query(ImmatureMiningRewardSummary)\
+            .filter(ImmatureMiningRewardSummary.mining_round == self._mining_round)\
+            .all()
+        for item in immature_summary_items:
+            immature_summary_dict[item.holder] = item    
 
         items = db_session.query(TokenEvent)\
             .filter(TokenEvent.token == self._share_token_address)\
@@ -68,16 +76,13 @@ class ShareMining(SyncerInterface):
             db_session.add(immature_mining_reward)
 
             # update immature_mining_reward_summaries table, simulated materialized view
-            immature_summary_item = db_session.query(ImmatureMiningRewardSummary)\
-                .filter(ImmatureMiningRewardSummary.mining_round == self._mining_round)\
-                .filter(ImmatureMiningRewardSummary.holder == holder)\
-                    .first()
-            if immature_summary_item is None:
+            if holder not in immature_summary_dict.keys():
                 immature_summary_item = ImmatureMiningRewardSummary()
                 immature_summary_item.mining_round = self._mining_round
                 immature_summary_item.holder = holder
                 immature_summary_item.mcb_balance = reward
             else:
+                immature_summary_item = immature_summary_dict[holder]
                 immature_summary_item.mcb_balance += reward
             db_session.add(immature_summary_item)
 
