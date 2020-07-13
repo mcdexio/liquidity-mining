@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS perp_share_amm_proxy_maps CASCADE;
