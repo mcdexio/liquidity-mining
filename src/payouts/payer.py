@@ -42,9 +42,9 @@ class Payer:
             resp = requests.get(config.ETH_GAS_URL, timeout=5)
             if resp.status_code / 100 == 2:
                 rsp = json.loads(resp.content)
-                self.gas_price = self._web3.toWei(
+                self._gas_price = self._web3.toWei(
                     rsp.get(config.GAS_LEVEL) / 10, "gwei")
-                self._logger.info(f"new gas price: {self.gas_price}")
+                self._logger.info(f"new gas price: {self._gas_price}")
         except Exception as e:
             self._logger.fatal(f"get gas price error {e}")
 
@@ -196,7 +196,7 @@ class Payer:
             return
         
         # approve MCB token to disperse for multiple transaction
-        if self._MCBToken.allowance(self._disperse.address, self._payer_account) == Wad(0):
+        if self._MCBToken.allowance(self._payer_account, self._disperse.address) == Wad(0):
             self._MCBToken.approve(self._disperse.address, self._payer_account)
 
         # check pending transactions
@@ -208,6 +208,16 @@ class Payer:
         miners_count = len(unpaid_rewards["miners"])
         if miners_count == 0:
             self._logger.info(f"no miner need to be payed")
+            return
+
+        total_amount = Decimal(0)
+        for reward in unpaid_rewards['amounts']:
+            total_amount += reward
+
+        self._logger.info(f"total_amount: {total_amount}")
+        admin_input = input("yes or no: ")
+        if admin_input != "yes":
+            self._logger.info(f"input is {admin_input}. payer stop!")
             return
 
         # get gas price for transaction
