@@ -7,7 +7,7 @@ from decimal import Decimal, getcontext, ROUND_DOWN
 from contract.erc20 import ERC20Token
 from lib.address import Address
 from lib.wad import Wad
-from model.orm import ImmatureMiningReward, TokenEvent, ImmatureMiningRewardSummary, TokenBalance
+from model.orm import ImmatureMiningReward, TokenEvent, ImmatureMiningRewardSummary, TokenBalance, PerpShareAmmProxyMap
 from watcher import Watcher
 
 import config
@@ -26,8 +26,59 @@ class ShareMining(SyncerInterface):
         self._reward_per_block = reward_per_block
         self._share_token_address = share_token_address.lower()
         self._mining_round = mining_round
+        self._rebalance_hard_fork_block_number = config.REBALANCE_HARD_FORK_BLOCK_NUMBER
 
         self._logger = logging.getLogger()
+
+    def _get_token_map(self, db_session):
+        token_map = {}
+        token_map[self._share_token_address] = {}
+        item = db_session.query(PerpShareAmmProxyMap)\
+            .filter(PerpShareAmmProxyMap.share_addr == self._share_token_address)\
+            .first()
+        if item is not None:
+            token_map[self._share_token_address] = {
+                'perp_addr': item.perp_addr,
+                'amm_addr': item.amm_addr,
+                'amm_proxy_addr': item.proxy_addr,
+            }
+        return token_map
+
+    def _get_effective_share_info(self, share_token_items, total_share_token_amount, db_session):
+        effective_share_dict = {}
+        position_holder_dict = {}
+        share_token_dict = {}
+        total_effective_share_amount = Decimal(0)
+        for item in share_token_items:
+            share_token_dict[item.holder] = item.amount
+           
+        token_map = self._get_token_map(db_session)
+        perp_addr = token_map[self._share_token_address].get('perp_addr')
+        amm_proxy_addr = token_map[self._share_token_address].get('amm_proxy_addr')
+        position_items = db_session.query(TokenBalance)\
+            .filter(TokenBalance.token == perp_addr)\
+            .all()
+        for item in position_items:
+            position_holder_dict[item.holder] = item.balance
+        amm_position = position_holder_dict[amm_proxy_addr]
+
+        for holder, holder_position_in_margin_account in position_holder_dict.items():
+            holder_share_token_amount = share_token_dict.get(holder)
+            if holder_share_token_amount == Decimal(0):
+                continue
+            holder_position_in_amm = Wad.from_number(amm_position) * Wad.from_number(holder_share_token_amount) / Wad.from_number(total_share_token_amount)
+            holder_portfolio_position = holder_position_in_amm + Wad.from_number(holder_position_in_margin_account)
+            imbalance_rate = abs(holder_portfolio_position / holder_position_in_amm)
+            if imbalance_rate <= Decimal(0.1):
+                holder_effective_share = holder_share_token_amount
+            elif imbalance_rate >= Decimal(0.9):
+                holder_effective_share = holder_share_token_amount * Decimal(0.1)
+            else:
+                holder_effective_share = holder_share_token_amount * (Decimal(89/80) - imbalance_rate * Decimal(9/8))
+            effective_share_dict[holder] = holder_effective_share
+            total_effective_share_amount += holder_effective_share
+        return effective_share_dict, total_effective_share_amount
+
 
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
@@ -53,7 +104,7 @@ class ShareMining(SyncerInterface):
         for item in immature_summary_items:
             immature_summary_dict[item.holder] = item    
 
-        items = db_session.query(TokenEvent)\
+        share_token_items = db_session.query(TokenEvent)\
             .filter(TokenEvent.token == self._share_token_address)\
             .filter(TokenEvent.block_number <= block_number)\
             .group_by(TokenEvent.holder)\
@@ -61,12 +112,22 @@ class ShareMining(SyncerInterface):
                 TokenEvent.holder,
                 func.sum(TokenEvent.amount).label('amount')
         ).all()
-        self._logger.info(f'sync mining reward, block_number:{block_number}, holders:{len(items)}')
-        for item in items:
+        self._logger.info(f'sync mining reward, block_number:{block_number}, holders:{len(share_token_items)}')
+        
+        # check rebalance_hard_fork block number 
+        if block_number >= self._rebalance_hard_fork_block_number:
+            effective_share_dict, total_effective_share_amount = self._get_effective_share_info(share_token_items, total_share_token_amount, db_session)
+
+        for item in share_token_items:
             holder = item.holder
-            holder_share_token_amount = Decimal(item.amount)
-            wad_reward = Wad.from_number(self._reward_per_block) * Wad.from_number(holder_share_token_amount) / Wad.from_number(total_share_token_amount)
-            reward = Decimal(str(wad_reward))
+            if block_number >= self._rebalance_hard_fork_block_number:
+                holder_effective_share_amount = effective_share_dict.get(holder, Decimal(0))
+                wad_reward = Wad.from_number(self._reward_per_block) * Wad.from_number(holder_effective_share_amount) / Wad.from_number(total_effective_share_amount)
+                reward = Decimal(str(wad_reward))
+            else:
+                holder_share_token_amount = Decimal(item.amount)
+                wad_reward = Wad.from_number(self._reward_per_block) * Wad.from_number(holder_share_token_amount) / Wad.from_number(total_share_token_amount)
+                reward = Decimal(str(wad_reward))
 
             immature_mining_reward = ImmatureMiningReward()
             immature_mining_reward.block_number = block_number
