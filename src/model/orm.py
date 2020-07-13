@@ -155,3 +155,12 @@ class RoundPaymentSummary(Base):
     mining_round = Column(String, primary_key=True)
     holder = Column(String, primary_key=True)
     paid_amount = Column(DECIMAL(78, 18))
+
+
+class PerpShareAmmProxyMap(Base):
+    __tablename__ = "perp_share_amm_proxy_maps"
+
+    perp_addr = Column(String, primary_key=True)
+    share_addr = Column(String, primary_key=True)
+    amm_addr = Column(String, primary_key=True)
+    proxy_addr = Column(String, primary_key=True)
