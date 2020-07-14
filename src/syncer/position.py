@@ -90,7 +90,7 @@ class PositionTracer(SyncerInterface):
                 .order_by(desc(PositionEvent.block_number))\
                 .first()
             if position_event is None:
-                item.delete()
+                db_session.delete(item)
             else:
                 item.balance = position_event.amount
                 db_session.add(item)
