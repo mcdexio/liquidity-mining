@@ -171,4 +171,4 @@ class ShareMining(SyncerInterface):
                 db_session.add(summary_item)
 
         db_session.query(ImmatureMiningReward).filter(
-            ImmatureMiningReward.block_number > block_number).delete()
+            ImmatureMiningReward.block_number > block_number).delete(synchronize_session=False)
