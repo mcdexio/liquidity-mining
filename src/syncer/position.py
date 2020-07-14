@@ -11,7 +11,8 @@ from lib.address import Address
 from model import PositionEvent, PositionBalance
 
 from .types import SyncerInterface
-
+from hexbytes import HexBytes
+from eth_utils import big_endian_to_int
 
 class PositionTracer(SyncerInterface):
     """Sync account's position balance"""
@@ -98,5 +99,31 @@ class PositionTracer(SyncerInterface):
         
         db_session.query(PositionEvent).filter(PositionEvent.perpetual_address == self._perpetual_address).filter(PositionBalance.watcher_id == watcher_id).\
             filter(PositionEvent.block_number > block_number).delete()
- 
-        
+
+    def test_pos(self):
+        event_filter_params = {
+            'topics': ['0xe763e57e3bd855c6028a13805d580b19a2403f388a7e9be7233d487a61a5abe5'],
+            'address': ['0x220a9f0DD581cbc58fcFb907De0454cBF3777f76'],
+            'fromBlock': 10455630,
+            'toBlock': 10455638,
+        }
+        logs = self._perpetual.web3.eth.getLogs(event_filter_params)
+        for log in logs:
+            parsed = {}
+            parsed['blockNumber'] = log['blockNumber']
+            parsed['blockHash'] = log['blockHash']
+            parsed['transactionIndex'] = log['transactionIndex']
+            parsed['transactionHash'] = log['transactionHash']
+            parsed['trader'] = log['topics'][1]
+            data = HexBytes(log['data'])
+            if len(data) != 32 * 8:
+                raise Exception(f'malformed event: {parsed}')
+            parsed['side'] = big_endian_to_int(data[32*0:32*1])
+            parsed['size'] = big_endian_to_int(data[32*1:32*2])
+            parsed['entryValue'] = big_endian_to_int(data[32*2:32*3])
+            parsed['entrySocialLoss'] = big_endian_to_int(data[32*3:32*4])
+            parsed['entryFundingLoss'] = big_endian_to_int(data[32*4:32*5])
+            parsed['cashBalance'] = big_endian_to_int(data[32*5:32*6])
+            parsed['perpetualTotalSize'] = big_endian_to_int(data[32*6:32*7])
+            parsed['price'] = big_endian_to_int(data[32*7:32*8])
+            print(parsed)
