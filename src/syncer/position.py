@@ -68,7 +68,7 @@ class PositionTracer(SyncerInterface):
             position_size = Decimal(event.get('size'))/Decimal(10**DECIMALS)
             cur_block_number = event.get('blockNumber')
             cur_transaction_hash = event.get('transactionHash')
-            event_index = event.get('transactionIndex')
+            event_index = event.get('logIndex')
             self._add_position_account_event(watcher_id, cur_block_number, cur_transaction_hash, event_index,
                                              holder, position_side, position_size, db_session)
 
@@ -116,6 +116,7 @@ class PositionTracer(SyncerInterface):
             parsed['blockNumber'] = log['blockNumber']
             parsed['blockHash'] = log['blockHash']
             parsed['transactionIndex'] = log['transactionIndex']
+            parsed['logIndex'] = log['logIndex']
             parsed['transactionHash'] = log['transactionHash'].hex()
             parsed['trader'] = '0x' + log['topics'][1].hex()[26:].lower()
             data = HexBytes(log['data'])
