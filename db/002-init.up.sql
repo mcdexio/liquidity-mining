@@ -3,7 +3,7 @@ CREATE TABLE perp_share_amm_proxy_maps (
   share_addr text NOT NULL,
   amm_addr text NOT NULL,
   proxy_addr text NOT NULL,
-  PRIMARY KEY (perp_addr, share_addr, amm_addr, proxy_addr),
+  PRIMARY KEY (perp_addr, share_addr, amm_addr, proxy_addr)
 );
 
 CREATE TABLE position_events (
