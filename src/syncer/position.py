@@ -8,6 +8,7 @@ from sqlalchemy import desc
 import config
 from contract.perpetual import Perpetual, PositionSide
 from lib.address import Address
+from lib.wad import Wad, DECIMALS
 from model import PositionEvent, PositionBalance
 
 from .types import SyncerInterface
@@ -23,7 +24,7 @@ class PositionTracer(SyncerInterface):
         self._inverse = inverse
         # contract
         self._perpetual = Perpetual(
-            web3=web3, address=Address(perpetual_address))
+            web3=web3, address=Address(web3.toChecksumAddress(self._perpetual_address)))
         self._logger = logging.getLogger()
     
     def _add_position_account_event(self, watcher_id, block_number, transaction_hash, event_index, holder, side, amount, db_session):
@@ -62,7 +63,7 @@ class PositionTracer(SyncerInterface):
         for event in position_events:
             holder = event.get('trader')
             position_side = PositionSide(event.get('side'))
-            position_size = event.get('size')
+            position_size = Decimal(event.get('size'))/Decimal(10**DECIMALS)
             cur_block_number = event.get('blockNumber')
             cur_transaction_hash = event.get('transactionHash')
             event_index = event.get('transactionIndex')
