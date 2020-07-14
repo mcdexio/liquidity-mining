@@ -20,11 +20,11 @@ class PositionTracer(SyncerInterface):
 
     def __init__(self, perpetual_address, inverse, web3):
         
-        self._perpetual_address = perpetual_address.lower()
+        self._perpetual_address = web3.toChecksumAddress(perpetual_address)
         self._inverse = inverse
         # contract
         self._perpetual = Perpetual(
-            web3=web3, address=Address(web3.toChecksumAddress(self._perpetual_address)))
+            web3=web3, address=Address(self._perpetual_address))
         self._logger = logging.getLogger()
     
     def _add_position_account_event(self, watcher_id, block_number, transaction_hash, event_index, holder, side, amount, db_session):
@@ -32,7 +32,7 @@ class PositionTracer(SyncerInterface):
         position_event.watcher_id = watcher_id
         position_event.block_number = block_number
         position_event.transaction_hash = transaction_hash
-        position_event.token = self._perpetual_address
+        position_event.token = self._perpetual_address.lower()
         position_event.event_index = event_index
         position_event.holder = holder
         if (self._inverse and side == PositionSide.LONG) or \
@@ -44,12 +44,12 @@ class PositionTracer(SyncerInterface):
         # update position_balances table
         position_balance_item = db_session.query(PositionBalance)\
             .filter(PositionBalance.holder == holder)\
-            .filter(PositionBalance.perpetual_address == self._perpetual_address)\
+            .filter(PositionBalance.perpetual_address == self._perpetual_address.lower())\
                 .first()
         if position_balance_item is None:
             position_balance_item = PositionBalance()
             position_balance_item.watcher_id = watcher_id
-            position_balance_item.perpetual_address = self._perpetual_address
+            position_balance_item.perpetual_address = self._perpetual_address.lower()
             position_balance_item.holder = holder
             position_balance_item.balance = amount
         else:
@@ -76,7 +76,7 @@ class PositionTracer(SyncerInterface):
         self._logger.info(f'rollback position block_number back to {block_number}')
         items = db_session.query(PositionBalance)\
             .filter(PositionBalance.block_number > block_number)\
-            .filter(PositionBalance.perpetual_address == self._perpetual_address)\
+            .filter(PositionBalance.perpetual_address == self._perpetual_address.lower())\
             .filter(PositionBalance.watcher_id == watcher_id)\
             .all()
         for item in items:
@@ -93,7 +93,7 @@ class PositionTracer(SyncerInterface):
                 item.balance = position_event.amount
                 db_session.add(item)
         
-        db_session.query(PositionEvent).filter(PositionEvent.perpetual_address == self._perpetual_address).filter(PositionBalance.watcher_id == watcher_id).\
+        db_session.query(PositionEvent).filter(PositionEvent.perpetual_address == self._perpetual_address.lower()).filter(PositionBalance.watcher_id == watcher_id).\
             filter(PositionEvent.block_number > block_number).delete()
 
     ################################ NOTICE ######################################
