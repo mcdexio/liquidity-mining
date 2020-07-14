@@ -9,6 +9,7 @@ import config
 from model.db import db_engine
 from model.orm import MiningRound
 from syncer.erc20 import ERC20Tracer
+from syncer.position import PositionTracer
 from syncer.mature import MatureChecker
 from syncer.rewards import ShareMining
 from watcher import Watcher
@@ -27,12 +28,13 @@ def create_watcher():
     session.rollback()
 
     share_token_tracer = ERC20Tracer(config.XIA_SHARE_TOKEN_ADDRESS, web3)
+    position_tracer = PositionTracer(config.XIA_PERPETUAL_ADDRESS, config.XIA_PERPETUAL_INVERSE, web3)
     miner = ShareMining(mining_round.begin_block_number, mining_round.end_block_number,
                         mining_round.release_per_block, config.XIA_SHARE_TOKEN_ADDRESS, MINING_ROUND)
     mature_checker = MatureChecker(
         config.MATURE_CONFIRM, config.MATURE_CHECKPOINT_INTERVAL, MINING_ROUND)
 
-    syncers = [share_token_tracer, miner, mature_checker]
+    syncers = [share_token_tracer, position_tracer, miner, mature_checker]
     return Watcher(mining_round.watcher_id, syncers, web3, db_engine, mining_round.end_block_number)
 
 
