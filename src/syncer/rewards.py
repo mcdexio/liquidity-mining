@@ -7,7 +7,7 @@ from decimal import Decimal, getcontext, ROUND_DOWN
 from contract.erc20 import ERC20Token
 from lib.address import Address
 from lib.wad import Wad
-from model.orm import ImmatureMiningReward, TokenEvent, ImmatureMiningRewardSummary, TokenBalance, PerpShareAmmProxyMap, PositionBalance
+from model.orm import ImmatureMiningReward, TokenEvent, ImmatureMiningRewardSummary, TokenBalance, PerpShareAmmProxyMap, PositionBalance, PositionEvent
 from watcher import Watcher
 
 import config
@@ -64,11 +64,12 @@ class ShareMining(SyncerInterface):
 
         for holder, holder_position_in_margin_account in position_holder_dict.items():
             holder_share_token_amount = share_token_dict.get(holder)
-            if holder_share_token_amount == Decimal(0):
+            if holder_share_token_amount == Decimal(0) or holder_share_token_amount is None:
                 continue
             holder_position_in_amm = Wad.from_number(amm_position) * Wad.from_number(holder_share_token_amount) / Wad.from_number(total_share_token_amount)
             holder_portfolio_position = holder_position_in_amm + Wad.from_number(holder_position_in_margin_account)
             imbalance_rate = abs(holder_portfolio_position / holder_position_in_amm)
+            imbalance_rate = Decimal(str(imbalance_rate))
             if imbalance_rate <= Decimal(0.1):
                 holder_effective_share = holder_share_token_amount
             elif imbalance_rate >= Decimal(0.9):
