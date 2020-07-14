@@ -52,7 +52,9 @@ class PositionTracer(SyncerInterface):
             position_balance_item.perpetual_address = self._perpetual_address.lower()
             position_balance_item.holder = holder
             position_balance_item.balance = amount
+            position_balance_item.block_number = block_number
         else:
+            position_balance_item.block_number = block_number
             position_balance_item.balance = amount
         db_session.add(position_balance_item)
         
