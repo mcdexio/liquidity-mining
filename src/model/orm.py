@@ -70,7 +70,7 @@ class PositionEvent(Base):
     event_index = Column(Integer, primary_key=True)
     perpetual_address = Column(String, primary_key=True)
     holder = Column(String, primary_key=True)
-    position_amount = Column(DECIMAL(78, 18))
+    amount = Column(DECIMAL(78, 18))
     watcher_id = Column(Integer)
   
   

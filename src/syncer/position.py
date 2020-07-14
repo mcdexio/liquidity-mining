@@ -32,7 +32,7 @@ class PositionTracer(SyncerInterface):
         position_event.watcher_id = watcher_id
         position_event.block_number = block_number
         position_event.transaction_hash = transaction_hash
-        position_event.token = self._perpetual_address.lower()
+        position_event.perpetual_address = self._perpetual_address.lower()
         position_event.event_index = event_index
         position_event.holder = holder
         if (self._inverse and side == PositionSide.LONG) or \
@@ -51,9 +51,9 @@ class PositionTracer(SyncerInterface):
             position_balance_item.watcher_id = watcher_id
             position_balance_item.perpetual_address = self._perpetual_address.lower()
             position_balance_item.holder = holder
-            position_balance_item.balance = amount
+            position_balance_item.amount = amount
         else:
-            position_balance_item.balance = amount
+            position_balance_item.amount = amount
         db_session.add(position_balance_item)
         
     def sync(self, watcher_id, block_number, block_hash, db_session):
