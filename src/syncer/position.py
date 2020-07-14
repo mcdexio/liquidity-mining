@@ -57,27 +57,22 @@ class PositionTracer(SyncerInterface):
         
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
-
-        transfer_filter = self._perpetual.contract.events.UpdatePositionAccount().createFilter(
-            fromBlock=Web3.toHex(block_number), toBlock=Web3.toHex(block_number))
-        all_filter_events = transfer_filter.get_all_entries()
-        self._logger.info(f'sync erc20 event, block_number:{block_number}, events:{len(all_filter_events)}')
-        for row in all_filter_events:
-            account_info = row.args
-            holder = account_info.get('trader')
-            margin_account = account_info.get('account')
-            position_side = PositionSide(margin_account.get('side'))
-            position_size = margin_account.get('size')
-            cur_block_number = row.blockNumber
-            cur_transaction_hash = row.transactionHash
-            event_index = row.logIndex
+        position_events = self._parse_perpetual_update_position_event_logs(block_number)
+        self._logger.info(f'sync position event, block_number:{block_number}, events:{len(position_events)}')
+        for event in position_events:
+            holder = event.get('trader')
+            position_side = PositionSide(event.get('side'))
+            position_size = event.get('size')
+            cur_block_number = event.get('blockNumber')
+            cur_transaction_hash = event.get('transactionHash')
+            event_index = event.get('transactionIndex')
             self._add_position_account_event(watcher_id, cur_block_number, cur_transaction_hash, event_index,
                                              holder, position_side, position_size, db_session)
 
 
     def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
-        self._logger.info(f'rollback erc20 block_number back to {block_number}')
+        self._logger.info(f'rollback position block_number back to {block_number}')
         items = db_session.query(PositionBalance)\
             .filter(PositionBalance.block_number > block_number)\
             .filter(PositionBalance.perpetual_address == self._perpetual_address)\
@@ -100,13 +95,18 @@ class PositionTracer(SyncerInterface):
         db_session.query(PositionEvent).filter(PositionEvent.perpetual_address == self._perpetual_address).filter(PositionBalance.watcher_id == watcher_id).\
             filter(PositionEvent.block_number > block_number).delete()
 
-    def test_pos(self):
+    ################################ NOTICE ######################################
+    #                   position size is correct value                           #
+    # cashBalance maybe not right(advise not to use it), get it from other event #
+    ##############################################################################
+    def _parse_perpetual_update_position_event_logs(self, block_number):
         event_filter_params = {
-            'topics': ['0xe763e57e3bd855c6028a13805d580b19a2403f388a7e9be7233d487a61a5abe5'],
-            'address': ['0x220a9f0DD581cbc58fcFb907De0454cBF3777f76'],
-            'fromBlock': 10455630,
-            'toBlock': 10455638,
+            'topics': [config.PERPETUAL_POSITION_TOPIC],
+            'address': [self._perpetual_address],
+            'fromBlock': block_number,
+            'toBlock': block_number,
         }
+        event_data = []
         logs = self._perpetual.web3.eth.getLogs(event_filter_params)
         for log in logs:
             parsed = {}
@@ -126,4 +126,5 @@ class PositionTracer(SyncerInterface):
             parsed['cashBalance'] = big_endian_to_int(data[32*5:32*6])
             parsed['perpetualTotalSize'] = big_endian_to_int(data[32*6:32*7])
             parsed['price'] = big_endian_to_int(data[32*7:32*8])
-            print(parsed)
+            event_data.append(parsed)
+        return event_data

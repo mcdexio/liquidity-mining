@@ -39,7 +39,7 @@ class Liquidate:
         self.amount = Wad(amount)
 
 class Perpetual(Contract):
-    abi = Contract._load_abi(__name__, '../abi/Perpetual.abi')
+    abi = Contract._load_abi(__name__, '../abi/perpetual.abi')
 
     def __init__(self, web3: Web3, address: Address):
         assert(isinstance(web3, Web3))
