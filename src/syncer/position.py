@@ -45,15 +45,15 @@ class PositionTracer(SyncerInterface):
         position_balance_item = db_session.query(PositionBalance)\
             .filter(PositionBalance.holder == holder)\
             .filter(PositionBalance.perpetual_address == self._perpetual_address.lower())\
-                .first()
+            .first()
         if position_balance_item is None:
             position_balance_item = PositionBalance()
             position_balance_item.watcher_id = watcher_id
             position_balance_item.perpetual_address = self._perpetual_address.lower()
             position_balance_item.holder = holder
-            position_balance_item.amount = amount
+            position_balance_item.balance = amount
         else:
-            position_balance_item.amount = amount
+            position_balance_item.balance = amount
         db_session.add(position_balance_item)
         
     def sync(self, watcher_id, block_number, block_hash, db_session):
