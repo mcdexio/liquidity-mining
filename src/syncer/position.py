@@ -114,8 +114,8 @@ class PositionTracer(SyncerInterface):
             parsed['blockNumber'] = log['blockNumber']
             parsed['blockHash'] = log['blockHash']
             parsed['transactionIndex'] = log['transactionIndex']
-            parsed['transactionHash'] = log['transactionHash']
-            parsed['trader'] = log['topics'][1]
+            parsed['transactionHash'] = log['transactionHash'].hex()
+            parsed['trader'] = '0x' + log['topics'][1].hex()[26:].lower()
             data = HexBytes(log['data'])
             if len(data) != 32 * 8:
                 raise Exception(f'malformed event: {parsed}')
