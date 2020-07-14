@@ -79,7 +79,7 @@ class PositionBalance(Base):
 
     perpetual_address = Column(String, primary_key=True)
     holder = Column(String, primary_key=True)
-    position_balance = Column(DECIMAL(78, 18))
+    balance = Column(DECIMAL(78, 18))
     block_number = Column(Integer)
     watcher_id = Column(Integer)
 
