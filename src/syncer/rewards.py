@@ -7,7 +7,7 @@ from decimal import Decimal, getcontext, ROUND_DOWN
 from contract.erc20 import ERC20Token
 from lib.address import Address
 from lib.wad import Wad
-from model.orm import ImmatureMiningReward, TokenEvent, ImmatureMiningRewardSummary, TokenBalance, PerpShareAmmProxyMap
+from model.orm import ImmatureMiningReward, TokenEvent, ImmatureMiningRewardSummary, TokenBalance, PerpShareAmmProxyMap, PositionBalance
 from watcher import Watcher
 
 import config
@@ -55,8 +55,8 @@ class ShareMining(SyncerInterface):
         token_map = self._get_token_map(db_session)
         perp_addr = token_map[self._share_token_address].get('perp_addr')
         amm_proxy_addr = token_map[self._share_token_address].get('amm_proxy_addr')
-        position_items = db_session.query(TokenBalance)\
-            .filter(TokenBalance.token == perp_addr)\
+        position_items = db_session.query(PositionBalance)\
+            .filter(PositionBalance.perpetual_address == perp_addr)\
             .all()
         for item in position_items:
             position_holder_dict[item.holder] = item.balance

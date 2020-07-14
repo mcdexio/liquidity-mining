@@ -62,6 +62,27 @@ class TokenBalance(Base):
     balance = Column(DECIMAL(78, 18))
     watcher_id = Column(Integer)
 
+class PositionEvent(Base):
+    __tablename__ = "position_events"
+
+    block_number = Column(Integer, primary_key=True)
+    transaction_hash = Column(String, primary_key=True)
+    event_index = Column(Integer, primary_key=True)
+    perpetual_address = Column(String, primary_key=True)
+    holder = Column(String, primary_key=True)
+    position_amount = Column(DECIMAL(78, 18))
+    watcher_id = Column(Integer)
+  
+  
+class PositionBalance(Base):
+    __tablename__ = "position_balances"
+
+    perpetual_address = Column(String, primary_key=True)
+    holder = Column(String, primary_key=True)
+    position_balance = Column(DECIMAL(78, 18))
+    block_number = Column(Integer)
+    watcher_id = Column(Integer)
+
 
 
 class ImmatureMiningReward(Base):
