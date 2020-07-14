@@ -117,10 +117,10 @@ class MatureChecker(SyncerInterface):
             return
         else:
             db_session.query(MatureMiningReward).filter(
-                MatureMiningReward.block_number > block_number).delete()
+                MatureMiningReward.block_number > block_number).delete(synchronize_session=False)
             if checkpoint_latest_block_number > block_number:
                 db_session.query(MatureMiningRewardCheckpoint).filter(
-                    MatureMiningRewardCheckpoint.block_number > block_number).delete()
+                    MatureMiningRewardCheckpoint.block_number > block_number).delete(synchronize_session=False)
 
             # get correct latest checkpoint block number once again
             checkpoint_latest_block_number = self._get_mature_mining_reward_checkpoint_latest_block_number(

@@ -96,7 +96,7 @@ class PositionTracer(SyncerInterface):
                 db_session.add(item)
         
         db_session.query(PositionEvent).filter(PositionEvent.perpetual_address == self._perpetual_address.lower()).filter(PositionBalance.watcher_id == watcher_id).\
-            filter(PositionEvent.block_number > block_number).delete()
+            filter(PositionEvent.block_number > block_number).delete(synchronize_session=False)
 
     ################################ NOTICE ######################################
     #                   position size is correct value                           #
