@@ -93,7 +93,7 @@ class ShareMining(SyncerInterface):
                 func.sum(TokenBalance.balance)
         ).first()
         if result[0] is None:
-            self._logger.error(f'opps, token_balance is empty!')
+            self._logger.warning(f'opps, token_balance is empty!')
             return
         total_share_token_amount = result[0]
 
