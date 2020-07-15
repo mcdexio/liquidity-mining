@@ -50,7 +50,7 @@ class ShareMining(SyncerInterface):
         share_token_dict = {}
         total_effective_share_amount = Decimal(0)
         for item in share_token_items:
-            share_token_dict[item.holder] = item.amount
+            share_token_dict[item.holder] = item.balance
            
         token_map = self._get_token_map(db_session)
         perp_addr = token_map[self._share_token_address].get('perp_addr')
@@ -124,7 +124,7 @@ class ShareMining(SyncerInterface):
                 wad_reward = Wad.from_number(self._reward_per_block) * Wad.from_number(holder_effective_share_amount) / Wad.from_number(total_effective_share_amount)
                 reward = Decimal(str(wad_reward))
             else:
-                holder_share_token_amount = Decimal(item.amount)
+                holder_share_token_amount = Decimal(item.balance)
                 wad_reward = Wad.from_number(self._reward_per_block) * Wad.from_number(holder_share_token_amount) / Wad.from_number(total_share_token_amount)
                 reward = Decimal(str(wad_reward))
 
