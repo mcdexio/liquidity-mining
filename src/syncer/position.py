@@ -87,12 +87,13 @@ class PositionTracer(SyncerInterface):
                 .filter(PositionEvent.holder == item.holder)\
                 .filter(PositionEvent.perpetual_address == item.perpetual_address)\
                 .filter(PositionEvent.block_number <= block_number)\
-                .order_by(desc(PositionEvent.block_number))\
+                .order_by(desc(PositionEvent.block_number, PositionEvent.event_index))\
                 .first()
             if position_event is None:
                 db_session.delete(item)
             else:
                 item.balance = position_event.amount
+                item.block_number = position_event.block_number
                 db_session.add(item)
         
         db_session.query(PositionEvent).filter(PositionEvent.perpetual_address == self._perpetual_address.lower()).filter(PositionBalance.watcher_id == watcher_id).\
