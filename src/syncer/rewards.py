@@ -105,14 +105,12 @@ class ShareMining(SyncerInterface):
         for item in immature_summary_items:
             immature_summary_dict[item.holder] = item    
 
-        share_token_items = db_session.query(TokenEvent)\
-            .filter(TokenEvent.token == self._share_token_address)\
-            .filter(TokenEvent.block_number <= block_number)\
-            .group_by(TokenEvent.holder)\
+        share_token_items = db_session.query(TokenBalance)\
+            .filter(TokenBalance.token == self._share_token_address)\
             .with_entities(
-                TokenEvent.holder,
-                func.sum(TokenEvent.amount).label('amount')
-        ).all()
+                TokenBalance.holder,
+                TokenBalance.balance
+        ).all()        
         self._logger.info(f'sync mining reward, block_number:{block_number}, holders:{len(share_token_items)}')
         
         # check rebalance_hard_fork block number 
