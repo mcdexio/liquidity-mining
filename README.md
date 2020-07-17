@@ -9,22 +9,55 @@
 - Begin Block: 10,420,000
 - End Block: 10,624,999
 
-#### Distribution
+## Mining Reward Distribution Rules
 
 1. The mining rewards are calculated in every block.
-   
-2. Each AMM gets the mining rewards according to the USD value of its `MaginBalance` .  
-   
-   Reward for AMM_i: 
-   
-   `Reward_AMM_i = MaginBalance_USD_i / SUM(MaginBalance_USD_j) * 2`
 
-3. The liquidity providers (LPs) of the AMM_i get the mining rewards according to their balances of the AMM_i's share token.
-   
-   Reward for the LP_k of AMM_i: 
-   
-   `Reward_LP_k = Share_Token_Balance_k / Total_Share_Token_Supply * Reward_AMM_i`
+2. The LP_i's position in AMM:
 
+```
+Position_In_AMM_i = Share_Token_Balance_i / Total_Share_Token_Supply * Total_Position_In_AMM
+```
+
+3. The net position of LP_j' portfolio:
+
+```
+Portfolio_Position_i = Position_in_AMM_i + Positon_In_Margin_Account_i
+```
+
+4. The imbalance rate of LP_j's portfolio:
+
+```
+Imbalance_Rate_i = ABS(Portfolio_Position_i) / ABS(Position_in_AMM_i)
+```
+
+5. The mining effective share of LP_i:
+```
+Effective_Share_i = Share_Token_Balance_i    If Imbalance_Rate_i <= 10%
+Effective_Share_i = Share_Token_Balance_i * (89/80 - Imbalance_Rate_i * 9/8)  if  10% <  Imbalance_Rate_i < 90%
+Effective_Share_i = Share_Token_Balance_i * 0.1    If Imbalance_Rate_i >= 90%
+```
+It means that if the LP's imbalance rate is below 10%, he can still get the same mining reward with that of a fully balanced portfolio.
+
+```
+Invalid_Mining_Share_i = Share_Token_Balance_i  - Effective_Share_i 
+```
+
+6. The mining rewards of LP_i of AMM_j:
+
+```
+Reward_LP_j = Effective_Share_i / SUM(Effective_Share_k) * Reward_AMM_j
+```
+
+7. The AMM_j's total effective mining value:
+```
+Effective_Value_j = SUM(Effective_Share_k) / Total_Share_Token_Supply * Margin_Balance_In_USD_j
+```
+
+8. Distribute the mining rewards (2MCB/block) among the AMMs:
+```
+Reward_AMM_j = Effective_Value_j / SUM(Effective_Value_k) * 2MCB
+```
 
 #### AMM List
 
