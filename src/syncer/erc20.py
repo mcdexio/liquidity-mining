@@ -69,6 +69,10 @@ class ERC20Tracer(SyncerInterface):
             cur_transaction_hash = row.transactionHash
             event_index = row.logIndex
 
+            if from_addr ==  to_addr:
+                self._logger.warning(f'from_addr eq to_addr, txid:{cur_transaction_hash}')
+                continue
+            
             if from_addr == '0x0000000000000000000000000000000000000000':
                 transfer_type = 'to'
                 holder = to_addr
