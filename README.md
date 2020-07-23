@@ -51,7 +51,7 @@ Reward_LP_j = Effective_Share_i / SUM(Effective_Share_k) * Reward_AMM_j
 
 7. The AMM_j's total effective mining value:
 ```
-Effective_Value_j = SUM(Effective_Share_k) / Total_Share_Token_Supply * Margin_Balance_In_USD_j
+Effective_Value_j = SUM(Effective_Share_k) / Total_Share_Token_Supply * AMM_Position_Size_In_USD_j
 ```
 
 8. Distribute the mining rewards (2MCB/block) among the AMMs:
