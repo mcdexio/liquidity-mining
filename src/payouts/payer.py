@@ -66,6 +66,12 @@ class Payer:
         transaction = db_session.query(PaymentTransaction)\
             .filter_by(status = PaymentTransaction.PENDING).first()
         data = json.loads(transaction.transaction_data)
+        amounts = []
+        for i in range(len(data["amounts"])):
+            amounts.append(Decimal(data["amounts"][i]))
+            self._logger.info(f'miner {data["miners"][i].lower()} unpaid rewards {data["amounts"][i]}')
+        data["amounts"] = amounts
+
         return data
 
     def _check_pending_transactions(self) -> bool:
@@ -225,7 +231,7 @@ class Payer:
         for reward in unpaid_rewards['amounts']:
             total_amount += reward
 
-        self._logger.info(f"total_amount: {total_amount}")
+        self._logger.info(f"total_amount: {total_amount*(Decimal(10)**18)}")
         admin_input = input("yes or no: ")
         if admin_input != "yes":
             self._logger.info(f"input is {admin_input}. payer stop!")
