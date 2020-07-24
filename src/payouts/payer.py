@@ -28,7 +28,8 @@ class Payer:
         self._web3 = Web3(HTTPProvider(endpoint_uri=config.ETH_RPC_URL,
                         request_kwargs={"timeout": config.ETH_RPC_TIMEOUT}))
         self._web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-        self._gas_price = self._web3.toWei(10, "gwei")
+        self._gas_price = self._web3.toWei(50, "gwei")
+        self._get_gas_price()
         self._payer_account = None
 
         # contract
@@ -39,7 +40,7 @@ class Payer:
 
     def _get_gas_price(self):
         try:
-            resp = requests.get(config.ETH_GAS_URL, timeout=5)
+            resp = requests.get(config.ETH_GAS_URL, timeout=60)
             if resp.status_code / 100 == 2:
                 rsp = json.loads(resp.content)
                 self._gas_price = self._web3.toWei(
@@ -59,6 +60,13 @@ class Payer:
             self._logger.fatal(f"Account {config.PAYER_ADDRESS} register key error")
             return False
         return True
+
+    def _restore_pending_data(self):
+        db_session = DBSession()
+        transaction = db_session.query(PaymentTransaction)\
+            .filter_by(status = PaymentTransaction.PENDING).first()
+        data = json.loads(transaction.transaction_data)
+        return data
 
     def _check_pending_transactions(self) -> bool:
         db_session = DBSession()
@@ -198,6 +206,9 @@ class Payer:
         # approve MCB token to disperse for multiple transaction
         if self._MCBToken.allowance(self._payer_account, self._disperse.address) == Wad(0):
             self._MCBToken.approve(self._disperse.address, self._payer_account)
+
+        # restore pending transaction if need
+        # unpaid_rewards = self._restore_pending_data()
 
         # check pending transactions
         if self._check_pending_transactions() is False:
