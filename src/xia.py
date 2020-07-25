@@ -8,6 +8,7 @@ from web3.middleware import construct_sign_and_send_raw_middleware, geth_poa_mid
 import config
 from model.db import db_engine
 from model.orm import MiningRound
+from syncer.chainlink_ETH_price import ETHPriceTracer
 from syncer.erc20 import ERC20Tracer
 from syncer.position import PositionTracer
 from syncer.mature import MatureChecker
@@ -27,6 +28,7 @@ def create_watcher():
         MiningRound.round == MINING_ROUND).one()
     session.rollback()
 
+    ETH_price_tracer = ETHPriceTracer(config.CHAINLINK_ETH_USD_ADDRESS, web3)
     share_token_tracer = ERC20Tracer(config.XIA_SHARE_TOKEN_ADDRESS, web3)
     position_tracer = PositionTracer(config.PERPETUAL_ADDRESS, config.PERPETUAL_INVERSE, web3)
     miner = ShareMining(mining_round.begin_block_number, mining_round.end_block_number,
@@ -34,7 +36,7 @@ def create_watcher():
     mature_checker = MatureChecker(
         config.MATURE_CONFIRM, config.MATURE_CHECKPOINT_INTERVAL, MINING_ROUND)
 
-    syncers = [share_token_tracer, position_tracer, miner, mature_checker]
+    syncers = [ETH_price_tracer, share_token_tracer, position_tracer, miner, mature_checker]
     return Watcher(mining_round.watcher_id, syncers, web3, db_engine, mining_round.end_block_number)
 
 
