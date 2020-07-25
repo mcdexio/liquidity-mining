@@ -191,3 +191,13 @@ class PerpShareAmmProxyMap(Base):
     share_addr = Column(String, primary_key=True)
     amm_addr = Column(String, primary_key=True)
     proxy_addr = Column(String, primary_key=True)
+
+class ChainLinkPriceEvent(Base):
+    __tablename__ = "chain_link_price_events"
+
+    block_number = Column(Integer, primary_key=True)
+    transaction_hash = Column(String, primary_key=True)
+    event_index = Column(Integer, primary_key=True)
+    chain_link_address = Column(String, primary_key=True)
+    price =  Column(DECIMAL(78, 18))
+    watcher_id = Column(Integer)
