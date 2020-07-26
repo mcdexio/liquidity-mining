@@ -1,0 +1,28 @@
+name: py3
+
+on:
+  push:
+    tags:
+    - v*
+
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build
+      run: |
+        docker build -t thing .
+    - name: Upload to aliyun
+      run: |
+        docker login --username=${{ secrets.ALI_REPO_USER }} --password=${{ secrets.ALI_REPO_PASSWORD }} registry.ap-northeast-1.aliyuncs.com
+        docker tag thing registry.ap-northeast-1.aliyuncs.com/oak-cloud/liquidity-mining:${{ steps.get_version.outputs.VERSION }}
+        docker push registry.ap-northeast-1.aliyuncs.com/oak-cloud/liquidity-mining:${{ steps.get_version.outputs.VERSION }}
