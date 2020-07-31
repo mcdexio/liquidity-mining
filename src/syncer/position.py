@@ -18,10 +18,11 @@ from eth_utils import big_endian_to_int
 class PositionTracer(SyncerInterface):
     """Sync account's position balance"""
 
-    def __init__(self, perpetual_address, inverse, web3):
+    def __init__(self, perpetual_address, inverse, web3, end_block):
         
         self._perpetual_address = web3.toChecksumAddress(perpetual_address)
         self._inverse = inverse
+        self._end_block = end_block
         # contract
         self._perpetual = Perpetual(
             web3=web3, address=Address(self._perpetual_address))
@@ -60,6 +61,10 @@ class PositionTracer(SyncerInterface):
         
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
+        if block_number > self._end_block:
+            self._logger.info(f'syncer position block_number {block_number} > mining window end block number!')
+            return
+            
         position_events = self._parse_perpetual_update_position_event_logs(block_number)
         self._logger.info(f'sync position event, block_number:{block_number}, events:{len(position_events)}')
         for event in position_events:

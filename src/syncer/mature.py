@@ -116,17 +116,22 @@ class MatureChecker(SyncerInterface):
             self._logger.info(f'no need rollback, mature_block_number < rollback_block_number')
             return
         else:
-            db_session.query(MatureMiningReward).filter(
-                MatureMiningReward.block_number > block_number).delete(synchronize_session=False)
+            db_session.query(MatureMiningReward)\
+                .filter(MatureMiningReward.block_number > block_number)\
+                .filter(MatureMiningReward.mining_round == self._mining_round)\
+                .delete(synchronize_session=False)
+
             if checkpoint_latest_block_number > block_number:
-                db_session.query(MatureMiningRewardCheckpoint).filter(
-                    MatureMiningRewardCheckpoint.block_number > block_number).delete(synchronize_session=False)
+                db_session.query(MatureMiningRewardCheckpoint)\
+                    .filter(MatureMiningRewardCheckpoint.block_number > block_number)\
+                    .filter(MatureMiningRewardCheckpoint.mining_round == self._mining_round)\
+                    .delete(synchronize_session=False)
 
             # get correct latest checkpoint block number once again
             checkpoint_latest_block_number = self._get_mature_mining_reward_checkpoint_latest_block_number(
                 db_session)
             # rollback mature_mining_reward record to latest correct checkpoint
-            self._logger.info(f'rollback mature_mining_reward block_number from {mature_latest_block_number} to {checkpoint_latest_block_number}')
+            self._logger.info(f'mining round {self._mining_round}, rollback mature_mining_reward block_number from {mature_latest_block_number} to {checkpoint_latest_block_number}')
             items = db_session.query(MatureMiningRewardCheckpoint)\
                 .filter(MatureMiningRewardCheckpoint.mining_round == self._mining_round)\
                 .filter(MatureMiningRewardCheckpoint.block_number == checkpoint_latest_block_number)\

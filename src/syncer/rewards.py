@@ -84,7 +84,7 @@ class ShareMining(SyncerInterface):
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
         if block_number < self._begin_block or block_number > self._end_block:
-            self._logger.info(f'block_number {block_number} not in mining window!')
+            self._logger.info(f'reward, block_number {block_number} not in mining window!')
             return
         
         result = db_session.query(TokenBalance)\
