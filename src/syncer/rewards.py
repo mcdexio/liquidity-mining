@@ -24,20 +24,20 @@ class ShareMining(SyncerInterface):
         self._begin_block = begin_block
         self._end_block = end_block
         self._reward_per_block = reward_per_block
-        self._share_token_address = share_token_address.lower()
+        self._eth_perp_share_token_address = share_token_address.lower()
         self._mining_round = mining_round
         self._rebalance_hard_fork_block_number = config.REBALANCE_HARD_FORK_BLOCK_NUMBER
 
         self._logger = logging.getLogger()
 
-    def _get_token_map(self, db_session):
+    def _get_token_map(self, share_token_address, db_session):
         token_map = {}
-        token_map[self._share_token_address] = {}
+        token_map[share_token_address] = {}
         item = db_session.query(PerpShareAmmProxyMap)\
-            .filter(PerpShareAmmProxyMap.share_addr == self._share_token_address)\
+            .filter(PerpShareAmmProxyMap.share_addr == share_token_address)\
             .first()
         if item is not None:
-            token_map[self._share_token_address] = {
+            token_map[share_token_address] = {
                 'perp_addr': item.perp_addr,
                 'amm_addr': item.amm_addr,
                 'amm_proxy_addr': item.proxy_addr,
@@ -52,9 +52,9 @@ class ShareMining(SyncerInterface):
         for item in share_token_items:
             share_token_dict[item.holder] = item.balance
            
-        token_map = self._get_token_map(db_session)
-        perp_addr = token_map[self._share_token_address].get('perp_addr')
-        amm_proxy_addr = token_map[self._share_token_address].get('amm_proxy_addr')
+        token_map = self._get_token_map(self._eth_perp_share_token_address, db_session)
+        perp_addr = token_map[self._eth_perp_share_token_address].get('perp_addr')
+        amm_proxy_addr = token_map[self._eth_perp_share_token_address].get('amm_proxy_addr')
         position_items = db_session.query(PositionBalance)\
             .filter(PositionBalance.perpetual_address == perp_addr)\
             .all()
@@ -81,21 +81,35 @@ class ShareMining(SyncerInterface):
         return effective_share_dict, total_effective_share_amount
 
 
-    def sync(self, watcher_id, block_number, block_hash, db_session):
-        """Sync data"""
-        if block_number < self._begin_block or block_number > self._end_block:
-            self._logger.info(f'reward, block_number {block_number} not in mining window!')
-            return
-        
+    def _get_total_share_token_amount(self, share_token_address):
         result = db_session.query(TokenBalance)\
-            .filter(TokenBalance.token == self._share_token_address)\
+            .filter(TokenBalance.token == share_token_address)\
             .with_entities(
                 func.sum(TokenBalance.balance)
         ).first()
         if result[0] is None:
             self._logger.warning(f'opps, token_balance is empty!')
+            total_share_token_amount = 0
+        else:
+            total_share_token_amount = result[0]
+        return total_share_token_amount
+
+    def sync(self, watcher_id, block_number, block_hash, db_session):
+        """Sync data"""
+        if block_number < self._begin_block or block_number > self._end_block:
+            self._logger.info(f'reward of mining_round: {self._mining_round}, block_number {block_number} not in mining window!')
             return
-        total_share_token_amount = result[0]
+
+        if self._mining_round == 'XIA':
+            reward_of_amms_percent = 1
+        elif self._mining_round == 'SHANG':
+            reward_of_amms_percent = 0.75
+            reward_of_uniswap_mcb_percent = 0.25
+
+        total_share_token_amount = self._get_total_share_token_amount(self._eth_perp_share_token_address)
+        if total_share_token_amount == 0:
+            self._logger.warning(f'opps, token_balance is empty!')
+            return
 
         # get all immature summary items
         immature_summary_dict = {}
@@ -106,7 +120,7 @@ class ShareMining(SyncerInterface):
             immature_summary_dict[item.holder] = item    
 
         share_token_items = db_session.query(TokenBalance)\
-            .filter(TokenBalance.token == self._share_token_address)\
+            .filter(TokenBalance.token == self._eth_perp_share_token_address)\
             .with_entities(
                 TokenBalance.holder,
                 TokenBalance.balance

@@ -27,14 +27,15 @@ def create_watcher():
         MiningRound.round == MINING_ROUND).one()
     session.rollback()
 
-    share_token_tracer = ERC20Tracer(config.XIA_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
+    eth_perp_share_token_tracer = ERC20Tracer(config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
+    uniswap_mcb_share_token_tracer = ERC20Tracer(config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
     position_tracer = PositionTracer(config.PERPETUAL_ADDRESS, config.PERPETUAL_INVERSE, web3, mining_round.end_block_number)
     miner = ShareMining(mining_round.begin_block_number, mining_round.end_block_number,
-                        mining_round.release_per_block, config.XIA_SHARE_TOKEN_ADDRESS, MINING_ROUND)
+                        mining_round.release_per_block, config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS, MINING_ROUND)
     mature_checker = MatureChecker(
         config.MATURE_CONFIRM, config.MATURE_CHECKPOINT_INTERVAL, MINING_ROUND)
 
-    syncers = [share_token_tracer, position_tracer, miner, mature_checker]
+    syncers = [eth_perp_share_token_tracer, uniswap_mcb_share_token_tracer, position_tracer, miner, mature_checker]
     return Watcher(mining_round.watcher_id, syncers, web3, db_engine, mining_round.end_block_number)
 
 def serv():
@@ -82,6 +83,7 @@ def main():
         rollback(args.rollback)
     elif args.extradata is not None:
         if args.extradata == 'uniswap_mcb_share':
+            # calculate shang reward need sync uniswap mcb share event
             end_block_number = 10624999  #xia end number
             watcher_id = 2
             share_token = config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS
