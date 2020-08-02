@@ -50,6 +50,7 @@ class ERC20Tracer(SyncerInterface):
             token_balance_item.holder = holder
             token_balance_item.balance = amount
         else:
+            token_balance_item.watcher_id = watcher_id
             token_balance_item.balance += amount
         db_session.add(token_balance_item)
         
@@ -99,12 +100,13 @@ class ERC20Tracer(SyncerInterface):
 
     def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
-        self._logger.info(f'rollback erc20 block_number back to {block_number}')
+        self._logger.info(f'rollback erc20 token: {self._token_address} block_number back to {block_number}')
         items = db_session.query(TokenEvent)\
+            .filter(TokenEvent.watcher_id == watcher_id)\
+            .filter(TokenEvent.token == self._token_address)\    
             .filter(TokenEvent.block_number > block_number)\
-            .group_by(TokenEvent.token, TokenEvent.holder)\
+            .group_by(TokenEvent.holder)\
             .with_entities(
-                TokenEvent.token,
                 TokenEvent.holder,
                 func.sum(TokenEvent.amount).label('amount')
         ).all()
@@ -112,10 +114,10 @@ class ERC20Tracer(SyncerInterface):
             # update token_balances table
             token_balance_item = db_session.query(TokenBalance)\
                 .filter(TokenBalance.holder == item.holder)\
-                .filter(TokenBalance.token == item.token)\
+                .filter(TokenBalance.token == self._token_address)\
                     .first()
             if token_balance_item is None:
-                self._logger.error(f'opps, update token_balance error, can not find item:{item}')
+                self._logger.error(f'opps, rollback update token_balance error, can not find item:{item}')
             else:
                 token_balance_item.balance -= item.amount
                 db_session.add(token_balance_item)
