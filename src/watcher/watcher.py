@@ -80,7 +80,7 @@ class Watcher:
                 self._logger.info('sync block[%d] hash[%s]', new_block.number, Web3.toHex(new_block.hash))
         except:
             result = -1
-            self._logger.warning('sync error', exec_info=1, stack_info=1)
+            self._logger.warning('sync error', exc_info=1, stack_info=1)
         finally:
             db_session.rollback()
         return result
@@ -107,7 +107,7 @@ class Watcher:
                     "rollback error:synced_block_number[%d] is larger than db[%d]", synced_block_number, db_watcher.synced_block_number)
             db_session.commit()
         except:
-            self._logger.warning('rollback error', exec_info=1, stack_info=1)
+            self._logger.warning('rollback error', exc_info=1, stack_info=1)
         finally:
             db_session.rollback()
         return result

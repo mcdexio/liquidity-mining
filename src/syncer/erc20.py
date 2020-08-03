@@ -103,7 +103,7 @@ class ERC20Tracer(SyncerInterface):
         self._logger.info(f'rollback erc20 token: {self._token_address} block_number back to {block_number}')
         items = db_session.query(TokenEvent)\
             .filter(TokenEvent.watcher_id == watcher_id)\
-            .filter(TokenEvent.token == self._token_address)\    
+            .filter(TokenEvent.token == self._token_address)\
             .filter(TokenEvent.block_number > block_number)\
             .group_by(TokenEvent.holder)\
             .with_entities(
