@@ -30,8 +30,8 @@ def create_watcher():
     eth_perp_share_token_tracer = ERC20Tracer(config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
     uniswap_mcb_share_token_tracer = ERC20Tracer(config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
     position_tracer = PositionTracer(config.PERPETUAL_ADDRESS, config.PERPETUAL_INVERSE, web3, mining_round.end_block_number)
-    miner = ShareMining(mining_round.begin_block_number, mining_round.end_block_number,
-                        mining_round.release_per_block, config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS, MINING_ROUND)
+    miner = ShareMining(mining_round.begin_block_number, mining_round.end_block_number, mining_round.release_per_block,
+                         MINING_ROUND, config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS, config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS)
     mature_checker = MatureChecker(
         config.MATURE_CONFIRM, config.MATURE_CHECKPOINT_INTERVAL, MINING_ROUND)
 

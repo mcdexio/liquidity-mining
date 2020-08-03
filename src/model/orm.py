@@ -89,6 +89,7 @@ class ImmatureMiningReward(Base):
     __tablename__ = "immature_mining_rewards"
 
     block_number = Column(Integer, primary_key=True)
+    pool_name = Column(String, primary_key=True)
     mining_round = Column(String, primary_key=True)
     holder = Column(String, primary_key=True)
     mcb_balance = Column(DECIMAL(78, 18))
@@ -97,6 +98,7 @@ class ImmatureMiningReward(Base):
 class ImmatureMiningRewardSummary(Base):
     __tablename__ = "immature_mining_reward_summaries"
 
+    pool_name = Column(String, primary_key=True)
     mining_round = Column(String, primary_key=True)
     holder = Column(String, primary_key=True)
     mcb_balance = Column(DECIMAL(78, 18))
@@ -105,6 +107,7 @@ class ImmatureMiningRewardSummary(Base):
 class MatureMiningReward(Base):
     __tablename__ = "mature_mining_rewards"
 
+    pool_name = Column(String, primary_key=True)
     mining_round = Column(String, primary_key=True)
     holder = Column(String, primary_key=True)
     block_number = Column(Integer)
@@ -113,6 +116,7 @@ class MatureMiningReward(Base):
 
 class MatureMiningRewardCheckpoint(Base):
     __tablename__ = "mature_mining_reward_checkpoints"
+    pool_name = Column(String, primary_key=True)
     mining_round = Column(String, primary_key=True)
     holder = Column(String, primary_key=True)
     block_number = Column(Integer, primary_key=True)

@@ -80,6 +80,7 @@ class MatureChecker(SyncerInterface):
             holder = item.holder
             if holder not in mature_mining_reward_dict.keys():
                 mature_mining_reward = MatureMiningReward()
+                mature_mining_reward.pool_name = item.pool_name
                 mature_mining_reward.block_number = addup_end_block_number
                 mature_mining_reward.mining_round = self._mining_round
                 mature_mining_reward.holder = holder
@@ -99,6 +100,7 @@ class MatureChecker(SyncerInterface):
                 MatureMiningReward.block_number == addup_end_block_number).all()
             for item in items:
                 checkpoint_item = MatureMiningRewardCheckpoint()
+                checkpoint_item.pool_name = item.pool_name
                 checkpoint_item.block_number = item.block_number
                 checkpoint_item.mining_round = item.mining_round
                 checkpoint_item.holder = item.holder
@@ -138,6 +140,7 @@ class MatureChecker(SyncerInterface):
                 .all()
             for item in items:
                 mature_mining_reward = MatureMiningReward()
+                mature_mining_reward.pool_name = item.pool_name
                 mature_mining_reward.block_number = item.block_number
                 mature_mining_reward.mining_round = item.mining_round
                 mature_mining_reward.holder = item.holder
