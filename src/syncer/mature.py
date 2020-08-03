@@ -70,8 +70,9 @@ class MatureChecker(SyncerInterface):
             .filter(ImmatureMiningReward.mining_round == self._mining_round)\
             .filter(ImmatureMiningReward.block_number <= addup_end_block_number)\
             .filter(ImmatureMiningReward.block_number > addup_begin_block_number)\
-            .group_by(ImmatureMiningReward.holder)\
+            .group_by(ImmatureMiningReward.pool_name, ImmatureMiningReward.holder)\
             .with_entities(
+                ImmatureMiningReward.pool_name, 
                 ImmatureMiningReward.holder,
                 func.sum(ImmatureMiningReward.mcb_balance).label('amount')
             )\
