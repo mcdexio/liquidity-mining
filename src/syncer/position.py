@@ -91,7 +91,7 @@ class PositionTracer(SyncerInterface):
             # update position_balances table
             position_event = db_session.query(PositionEvent)\
                 .filter(PositionEvent.holder == item.holder)\
-                .filter(PositionEvent.watcher_id == watcher_id).\
+                .filter(PositionEvent.watcher_id == watcher_id)\
                 .filter(PositionEvent.perpetual_address == item.perpetual_address)\
                 .filter(PositionEvent.block_number <= block_number)\
                 .order_by(desc(PositionEvent.block_number), desc(PositionEvent.event_index))\
