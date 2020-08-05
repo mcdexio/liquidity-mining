@@ -198,6 +198,7 @@ class ShareMining(SyncerInterface):
             .with_entities(
                 ImmatureMiningReward.pool_name,
                 ImmatureMiningReward.holder,
+                ImmatureMiningReward.mining_round,
                 func.sum(ImmatureMiningReward.mcb_balance).label('mcb_balance')
         ).all()
         for item in items:
