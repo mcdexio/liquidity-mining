@@ -15,10 +15,10 @@ ALTER TABLE immature_mining_reward_summaries ADD CONSTRAINT immature_mining_rewa
 
 ALTER TABLE mature_mining_rewards ADD COLUMN pool_name text;
 UPDATE mature_mining_rewards  SET pool_name = 'ETH_PERP';
-ALTER TABLE immature_mining_rewards DROP CONSTRAINT immature_mining_rewards_pkey;
-ALTER TABLE immature_mining_rewards ADD CONSTRAINT immature_mining_rewards_pkey PRIMARY KEY (block_number, mining_round, holder, pool_name);
+ALTER TABLE mature_mining_rewards DROP CONSTRAINT mature_mining_rewards_pkey;
+ALTER TABLE mature_mining_rewards ADD CONSTRAINT mature_mining_rewards_pkey PRIMARY KEY (mining_round, holder, pool_name);
 
 ALTER TABLE mature_mining_reward_checkpoints ADD COLUMN pool_name text;
 UPDATE mature_mining_reward_checkpoints  SET pool_name = 'ETH_PERP';
-ALTER TABLE immature_mining_rewards DROP CONSTRAINT immature_mining_rewards_pkey;
-ALTER TABLE immature_mining_rewards ADD CONSTRAINT immature_mining_rewards_pkey PRIMARY KEY (block_number, mining_round, holder, pool_name);
+ALTER TABLE mature_mining_reward_checkpoints DROP CONSTRAINT mature_mining_reward_checkpoints_pkey;
+ALTER TABLE mature_mining_reward_checkpoints ADD CONSTRAINT mature_mining_reward_checkpoints_pkey PRIMARY KEY (mining_round, block_number, holder, pool_name);
