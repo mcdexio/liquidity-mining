@@ -9,6 +9,7 @@ MINING_ROUND = os.environ.get('MINING_ROUND', 'XIA')
 MAX_PATCH_NUM = os.environ.get('MAX_PATCH_NUM', 100)
 WAIT_TIMEOUT = os.environ.get('WAIT_TIMEOUT', 600)
 MIN_PAY_AMOUNT = os.environ.get('MIN_PAY_AMOUNT', 1)
+PAY_ALL = os.environ.get('PAY_ALL', False)
 
 # db
 DB_URL = os.environ.get('DB_URL', '')

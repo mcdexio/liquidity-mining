@@ -5,7 +5,7 @@ import logging.config
 import requests
 import math
 from decimal import Decimal
-from sqlalchemy import desc
+from sqlalchemy import desc, and_
 
 from web3 import Web3, HTTPProvider
 from eth_account import Account
@@ -72,7 +72,7 @@ class Payer:
             self._logger.info(f'miner {data["miners"][i].lower()} unpaid rewards {data["amounts"][i]}')
         data["amounts"] = amounts
 
-        return data
+        return data, data["pool_amounts"]
 
     def _check_pending_transactions(self) -> bool:
         db_session = DBSession()
@@ -85,7 +85,7 @@ class Payer:
                 amounts = []
                 for amount in data["amounts"]:
                     amounts.append(Decimal(amount))
-                self._save_payments_info(tx_receipt, data["miners"], amounts)
+                self._save_payments_info(tx_receipt, data["miners"], amounts, data["pool_amounts"])
             except Exception as e:
                 self._logger.fatal(
                     f"get trasaction fail! tx_hash:{transaction.transaction_hash}, err:{e}")
@@ -93,7 +93,7 @@ class Payer:
 
         return True
 
-    def _save_payment_transaction(self, tx_hash, miners, amounts):
+    def _save_payment_transaction(self, tx_hash, miners, amounts, db_result):
         amounts_str = []
         for amount in amounts:
             amounts_str.append(str(amount))
@@ -103,6 +103,7 @@ class Payer:
             data = {
                 "miners": miners,
                 "amounts": amounts_str,
+                "pool_amounts": db_result,
             }
             pt.transaction_data = json.dumps(data)
             pt.transaction_hash = tx_hash
@@ -115,7 +116,7 @@ class Payer:
         finally:
             db_session.rollback()
 
-    def _save_payments_info(self, tx_receipt, miners, amounts):
+    def _save_payments_info(self, tx_receipt, miners, amounts, db_result):
         db_session = DBSession()
         try:
             # update transaction status
@@ -127,14 +128,41 @@ class Payer:
             # save payments
             if pt.status == PaymentTransaction.SUCCESS:
                 miner_payments = db_session.query(PaymentSummary).all()
-                miner_round_payments = db_session.query(RoundPaymentSummary).all()
+                miner_round_payments = db_session.query(RoundPaymentSummary)\
+                                        .filter_by(mining_round = config.MINING_ROUND).all()
 
                 payments_map = {}
                 for payment in miner_payments:
                     payments_map[payment.holder] = payment
                 round_payments_map = {}
                 for round_payment in miner_round_payments:
-                    round_payments_map[round_payment.holder] = round_payment
+                    round_payments_map[round_payment.pool_name][round_payment.holder] = round_payment
+
+                for pool_name, rewards in db_result.items():
+                    for miner, reward in rewards.items():
+                        # save round payments
+                        rp = RoundPayment()
+                        rp.mining_round = config.MINING_ROUND
+                        rp.pool_name = pool_name
+                        rp.holder = miner.lower()
+                        rp.amount = Decimal(reward)
+                        rp.transaction_id = pt.id
+                        db_session.add(rp)
+                        # update round payment summaries
+                        pool_round_summary = round_payments_map.get(rp.pool_name)
+                        miner_round_summary = None
+                        if pool_round_summary is not None:
+                            miner_round_summary = pool_round_summary.get(rp.holder)
+                        if miner_round_summary is not None:
+                            miner_round_summary.paid_amount += rp.amount
+                        else:
+                            miner_round_summary = RoundPaymentSummary()
+                            miner_round_summary.pool_name = pool_name
+                            miner_round_summary.mining_round = rp.mining_round
+                            miner_round_summary.holder = rp.holder
+                            miner_round_summary.paid_amount = rp.amount
+                        db_session.add(miner_round_summary)
+
                 for i in range(len(miners)):
                     # save payments
                     p = Payment()
@@ -143,14 +171,6 @@ class Payer:
                     p.pay_time = datetime.datetime.utcnow()
                     p.transaction_id = pt.id
                     db_session.add(p)
-
-                    # save round payments
-                    rp = RoundPayment()
-                    rp.mining_round = config.MINING_ROUND
-                    rp.holder = miners[i].lower()
-                    rp.amount = amounts[i]
-                    rp.transaction_id = pt.id
-                    db_session.add(rp)
 
                     # update payment summaries
                     payment_summary = payments_map.get(p.holder)
@@ -161,16 +181,7 @@ class Payer:
                         payment_summary.holder = p.holder
                         payment_summary.paid_amount = p.amount
                     db_session.add(payment_summary)
-                    # update round payment summaries
-                    round_payment_summary = round_payments_map.get(p.holder)
-                    if round_payment_summary is not None:
-                        round_payment_summary.paid_amount += p.amount
-                    else:
-                        round_payment_summary = RoundPaymentSummary()
-                        round_payment_summary.mining_round = rp.mining_round
-                        round_payment_summary.holder = rp.holder
-                        round_payment_summary.paid_amount = rp.amount
-                    db_session.add(round_payment_summary)
+
             else:
                 self._logger.warning(
                     f"transaction not success! tx_receipt:{tx_receipt}")
@@ -186,24 +197,37 @@ class Payer:
     def _get_miner_unpaid_reward(self):
         db_session = DBSession()
         items = db_session.query(MatureMiningReward)\
-                        .outerjoin(RoundPaymentSummary, MatureMiningReward.holder == RoundPaymentSummary.holder)\
+                        .outerjoin(RoundPaymentSummary, and_(
+                                MatureMiningReward.pool_name == RoundPaymentSummary.pool_name,
+                                MatureMiningReward.mining_round == RoundPaymentSummary.mining_round,
+                                MatureMiningReward.holder == RoundPaymentSummary.holder))\
                         .filter(MatureMiningReward.mining_round == config.MINING_ROUND)\
-                        .with_entities(MatureMiningReward.holder, MatureMiningReward.mcb_balance, RoundPaymentSummary.paid_amount)\
+                        .with_entities(MatureMiningReward.pool_name, MatureMiningReward.holder, MatureMiningReward.mcb_balance, RoundPaymentSummary.paid_amount)\
                         .all()
 
         result = {
-            "miners": [],
-            "amounts": [],
+            "miners":[],
+            "amounts":[]
         }
+        db_result = {}
+        miner_unpaid = {}
         for item in items:
             unpaid = item.mcb_balance
             if item.paid_amount is not None:
                 unpaid = item.mcb_balance - item.paid_amount
-            if unpaid >= Decimal(config.MIN_PAY_AMOUNT):
-                result["miners"].append(self._web3.toChecksumAddress(item.holder))
+            db_result[item.pool_name][item.holder] = str(unpaid)
+
+            if miner_unpaid.get(item.holder) is None:
+                miner_unpaid[item.holder] = unpaid
+            else:
+                miner_unpaid[item.holder] += unpaid
+
+        for miner, unpaid in miner_unpaid.items():
+            if config.PAY_ALL or unpaid >= Decimal(config.MIN_PAY_AMOUNT):
+                result["miners"].append(self._web3.toChecksumAddress(miner))
                 result["amounts"].append(unpaid)
                 self._logger.info(f'miner {item.holder} unpaid rewards {unpaid}')
-        return result
+        return result, db_result
 
     def run(self):
         if self._check_account_from_key() is False:
@@ -214,14 +238,14 @@ class Payer:
             self._MCBToken.approve(self._disperse.address, self._payer_account)
 
         # restore pending transaction if need
-        # unpaid_rewards = self._restore_pending_data()
+        # unpaid_rewards, db_result = self._restore_pending_data()
 
         # check pending transactions
         if self._check_pending_transactions() is False:
             return
         
         # get all miners unpaid rewards
-        unpaid_rewards = self._get_miner_unpaid_reward()
+        unpaid_rewards, db_result = self._get_miner_unpaid_reward()
         miners_count = len(unpaid_rewards["miners"])
         if miners_count == 0:
             self._logger.info(f"no miner need to be payed")
@@ -250,14 +274,14 @@ class Payer:
             try:
                 tx_hash = self._disperse.disperse_token(self._MCBToken.address, miners, amounts,
                     self._payer_account, self._gas_price)
-                self._save_payment_transaction(self._web3.toHex(tx_hash), miners, amounts)
+                self._save_payment_transaction(self._web3.toHex(tx_hash), miners, amounts, db_result)
             except Exception as e:
                 self._logger.fatal(f"disperse transaction fail! Exception:{e}")
                 continue
 
             try:
                 tx_receipt = self._web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.WAIT_TIMEOUT)
-                self._save_payments_info(tx_receipt, miners, amounts)
+                self._save_payments_info(tx_receipt, miners, amounts, db_result)
             except Exception as e:
                 self._logger.fatal(
                     f"get trasaction receipt fail! tx_hash:{tx_hash}, err:{e}")

@@ -22,3 +22,11 @@ ALTER TABLE mature_mining_reward_checkpoints ADD COLUMN pool_name text;
 UPDATE mature_mining_reward_checkpoints  SET pool_name = 'ETH_PERP';
 ALTER TABLE mature_mining_reward_checkpoints DROP CONSTRAINT mature_mining_reward_checkpoints_pkey;
 ALTER TABLE mature_mining_reward_checkpoints ADD CONSTRAINT mature_mining_reward_checkpoints_pkey PRIMARY KEY (mining_round, block_number, holder, pool_name);
+
+ALTER TABLE round_payments ADD COLUMN pool_name text;
+UPDATE round_payments  SET pool_name = 'ETH_PERP';
+
+ALTER TABLE round_payment_summaries ADD COLUMN pool_name text;
+UPDATE round_payment_summaries  SET pool_name = 'ETH_PERP';
+ALTER TABLE round_payment_summaries DROP CONSTRAINT round_payment_summaries_pkey;
+ALTER TABLE round_payment_summaries ADD CONSTRAINT round_payment_summaries_pkey PRIMARY KEY (mining_round, holder, pool_name);
