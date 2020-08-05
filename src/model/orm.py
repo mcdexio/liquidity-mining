@@ -167,6 +167,7 @@ class RoundPayment(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     mining_round = Column(String)
+    pool_name = Column(String)
     holder = Column(String)
     amount = Column(DECIMAL(78, 18))
     transaction_id = Column(Integer, ForeignKey('payment_transactions.id'))
@@ -179,6 +180,7 @@ class RoundPaymentSummary(Base):
 
     mining_round = Column(String, primary_key=True)
     holder = Column(String, primary_key=True)
+    pool_name = Column(String, primary_key=True)
     paid_amount = Column(DECIMAL(78, 18))
 
 
