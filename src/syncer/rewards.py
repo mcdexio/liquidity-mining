@@ -194,7 +194,7 @@ class ShareMining(SyncerInterface):
         items = db_session.query(ImmatureMiningReward)\
             .filter(ImmatureMiningReward.block_number > block_number)\
             .filter(ImmatureMiningReward.mining_round == self._mining_round)\
-            .group_by(ImmatureMiningReward.pool_name, ImmatureMiningReward.holder)\
+            .group_by(ImmatureMiningReward.pool_name, ImmatureMiningReward.holder, ImmatureMiningReward.mining_round)\
             .with_entities(
                 ImmatureMiningReward.pool_name,
                 ImmatureMiningReward.holder,
