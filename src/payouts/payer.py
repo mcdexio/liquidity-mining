@@ -136,6 +136,8 @@ class Payer:
                     payments_map[payment.holder] = payment
                 round_payments_map = {}
                 for round_payment in miner_round_payments:
+                    if round_payments_map.get(round_payment.pool_name) is None:
+                        round_payments_map[round_payment.pool_name] = {}
                     round_payments_map[round_payment.pool_name][round_payment.holder] = round_payment
 
                 for miner, rewards in miner_pool_amount.items():
@@ -225,7 +227,7 @@ class Payer:
                 miner_unpaid[item.holder] += unpaid
 
         for miner, unpaid in miner_unpaid.items():
-            if config.PAY_ALL or unpaid >= Decimal(config.MIN_PAY_AMOUNT):
+            if (config.PAY_ALL and unpaid > Decimal(0)) or unpaid >= Decimal(config.MIN_PAY_AMOUNT):
                 result["miners"].append(self._web3.toChecksumAddress(miner))
                 result["amounts"].append(unpaid)
                 self._logger.info(f'miner {item.holder} unpaid rewards {unpaid}')
