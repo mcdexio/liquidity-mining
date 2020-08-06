@@ -230,7 +230,7 @@ class Payer:
             if (config.PAY_ALL and unpaid > Decimal(0)) or unpaid >= Decimal(config.MIN_PAY_AMOUNT):
                 result["miners"].append(self._web3.toChecksumAddress(miner))
                 result["amounts"].append(unpaid)
-                self._logger.info(f'miner {item.holder} unpaid rewards {unpaid}')
+                self._logger.info(f'miner {miner} unpaid rewards {unpaid}')
         return result, db_result
 
     def run(self):
