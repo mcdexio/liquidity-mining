@@ -93,7 +93,7 @@ class Payer:
 
         return True
 
-    def _save_payment_transaction(self, tx_hash, miners, amounts, db_result):
+    def _save_payment_transaction(self, tx_hash, miners, amounts, miner_pool_amount):
         amounts_str = []
         for amount in amounts:
             amounts_str.append(str(amount))
@@ -103,7 +103,7 @@ class Payer:
             data = {
                 "miners": miners,
                 "amounts": amounts_str,
-                "pool_amounts": db_result,
+                "pool_amounts": miner_pool_amount,
             }
             pt.transaction_data = json.dumps(data)
             pt.transaction_hash = tx_hash
@@ -116,7 +116,7 @@ class Payer:
         finally:
             db_session.rollback()
 
-    def _save_payments_info(self, tx_receipt, miners, amounts, db_result):
+    def _save_payments_info(self, tx_receipt, miners, amounts, miner_pool_amount):
         db_session = DBSession()
         try:
             # update transaction status
@@ -138,8 +138,8 @@ class Payer:
                 for round_payment in miner_round_payments:
                     round_payments_map[round_payment.pool_name][round_payment.holder] = round_payment
 
-                for pool_name, rewards in db_result.items():
-                    for miner, reward in rewards.items():
+                for miner, rewards in miner_pool_amount.items():
+                    for pool_name, reward in rewards.items():
                         # save round payments
                         rp = RoundPayment()
                         rp.mining_round = config.MINING_ROUND
@@ -215,7 +215,9 @@ class Payer:
             unpaid = item.mcb_balance
             if item.paid_amount is not None:
                 unpaid = item.mcb_balance - item.paid_amount
-            db_result[item.pool_name][item.holder] = str(unpaid)
+            if db_result.get(item.holder) is None:
+                db_result[item.holder] = {}
+            db_result[item.holder][item.pool_name] = str(unpaid)
 
             if miner_unpaid.get(item.holder) is None:
                 miner_unpaid[item.holder] = unpaid
@@ -271,17 +273,21 @@ class Payer:
 
             miners = unpaid_rewards["miners"][start_idx:end_idx]
             amounts = unpaid_rewards["amounts"][start_idx:end_idx]
+            miner_pool_amount = {}
+            for miner in miners:
+                miner = miner.lower()
+                miner_pool_amount[miner] = db_result.get(miner)
             try:
                 tx_hash = self._disperse.disperse_token(self._MCBToken.address, miners, amounts,
                     self._payer_account, self._gas_price)
-                self._save_payment_transaction(self._web3.toHex(tx_hash), miners, amounts, db_result)
+                self._save_payment_transaction(self._web3.toHex(tx_hash), miners, amounts, miner_pool_amount)
             except Exception as e:
                 self._logger.fatal(f"disperse transaction fail! Exception:{e}")
                 continue
 
             try:
                 tx_receipt = self._web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.WAIT_TIMEOUT)
-                self._save_payments_info(tx_receipt, miners, amounts, db_result)
+                self._save_payments_info(tx_receipt, miners, amounts, miner_pool_amount)
             except Exception as e:
                 self._logger.fatal(
                     f"get trasaction receipt fail! tx_hash:{tx_hash}, err:{e}")
