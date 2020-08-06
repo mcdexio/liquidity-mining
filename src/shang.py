@@ -73,7 +73,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='MCDEX Liquidity mining: Round SHANG')
 
-    parser.add_argument('--extradata', dest='extradata', metavar='EXTRA_DATA', action='store', type=str, default='uniswap_mcb_share',
+    parser.add_argument('--extradata', dest='extradata', metavar='EXTRA_DATA', action='store', type=str,
                         help='extra new data for calculate liquidity mining reward')
     parser.add_argument('--rollback', dest='rollback', metavar='SYNCED_BLOCK', action='store', type=int,
                         help='rollback the watcher to SYNCED_BLOCK')
