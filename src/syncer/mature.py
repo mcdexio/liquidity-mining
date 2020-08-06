@@ -46,6 +46,8 @@ class MatureChecker(SyncerInterface):
             latest_block_number = result.block_number
         return latest_block_number
 
+
+
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
         latest_block_number = block_number
@@ -97,6 +99,15 @@ class MatureChecker(SyncerInterface):
             db_session)
         if (addup_end_block_number - checkpoint_latest_block_number) >= self._checkpoint_interval_number:
             self._logger.info(f'save checkpoint block_number:{addup_end_block_number}')
+            # check last round checkpoint block_number
+            result = db_session.query(MatureMiningRewardCheckpoint)\
+                .order_by(desc(MatureMiningRewardCheckpoint.block_number))\
+                .with_entities(
+                    MatureMiningRewardCheckpoint.block_number
+            ).first()
+            if result and addup_end_block_number <= result.block_number:
+                self._logger.info(f'no need save checkpoint block_number:{addup_end_block_number}, last round checkpoint number:{result.block_number}')
+                return
             items = db_session.query(MatureMiningReward).filter(
                 MatureMiningReward.block_number == addup_end_block_number).all()
             for item in items:
