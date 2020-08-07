@@ -1,9 +1,9 @@
 INSERT INTO watchers (id, initial_block_number, synced_block_number) VALUES (2, 10418546, 10418545);
 INSERT INTO watchers (id, initial_block_number, synced_block_number) VALUES (3, 10625000, 10624999);
 ALTER TABLE mining_rounds ADD COLUMN start_time timestamp, ADD COLUMN end_time timestamp, ADD COLUMN pool_supply text;
-UPDATE mining_rounds SET start_time = '2020-07-08', end_time = '2020-08-08', pool_supply = '{"ETH_PERP": 410000}' WHERE round = 'XIA';
+UPDATE mining_rounds SET start_time = '2020-07-08', end_time = '2020-08-09', pool_supply = '{"ETH_PERP": 410000}' WHERE round = 'XIA';
 
-INSERT INTO mining_rounds (round, begin_block_number, end_block_number, supply, release_per_block, watcher_id, start_time, end_time, pool_supply) VALUES ('SHANG', 10625000, 10727499, 205000, 2, 3, '2020-08-08', '2020-08-22', '{"ETH_PERP": 153750,"UNISWAP_MCB_ETH": 51250}');
+INSERT INTO mining_rounds (round, begin_block_number, end_block_number, supply, release_per_block, watcher_id, start_time, end_time, pool_supply) VALUES ('SHANG', 10625000, 10727499, 205000, 2, 3, '2020-08-09', '2020-08-23', '{"ETH_PERP": 153750,"UNISWAP_MCB_ETH": 51250}');
 
 
 ALTER TABLE immature_mining_rewards ADD COLUMN pool_name text;
