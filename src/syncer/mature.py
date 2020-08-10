@@ -47,7 +47,6 @@ class MatureChecker(SyncerInterface):
         return latest_block_number
 
 
-
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
         latest_block_number = block_number
@@ -64,7 +63,9 @@ class MatureChecker(SyncerInterface):
             .filter(MatureMiningReward.mining_round == self._mining_round)\
             .all()
         for item in mature_mining_reward_items:
-            mature_mining_reward_dict[item.holder] = item    
+            if item.pool_name not in mature_mining_reward_dict.keys():
+                mature_mining_reward_dict[item.pool_name] = {}
+            mature_mining_reward_dict[item.pool_name][item.holder] = item
 
         addup_begin_block_number = mature_latest_block_number
         addup_end_block_number = latest_block_number - self._mature_confirm_number
@@ -81,7 +82,8 @@ class MatureChecker(SyncerInterface):
             .all()
         for item in items:
             holder = item.holder
-            if holder not in mature_mining_reward_dict.keys():
+            pool_name = item.pool_name
+            if holder not in mature_mining_reward_dict[pool_name].keys():
                 mature_mining_reward = MatureMiningReward()
                 mature_mining_reward.pool_name = item.pool_name
                 mature_mining_reward.block_number = addup_end_block_number
@@ -89,7 +91,7 @@ class MatureChecker(SyncerInterface):
                 mature_mining_reward.holder = holder
                 mature_mining_reward.mcb_balance = item.amount
             else:
-                mature_mining_reward = mature_mining_reward_dict[holder]
+                mature_mining_reward = mature_mining_reward_dict[pool_name][holder]
                 mature_mining_reward.block_number = addup_end_block_number
                 mature_mining_reward.mcb_balance += item.amount
             db_session.add(mature_mining_reward)
