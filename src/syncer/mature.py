@@ -83,7 +83,7 @@ class MatureChecker(SyncerInterface):
         for item in items:
             holder = item.holder
             pool_name = item.pool_name
-            if holder not in mature_mining_reward_dict[pool_name].keys():
+            if pool_name not in mature_mining_reward_dict.keys() or holder not in mature_mining_reward_dict[pool_name].keys():
                 mature_mining_reward = MatureMiningReward()
                 mature_mining_reward.pool_name = item.pool_name
                 mature_mining_reward.block_number = addup_end_block_number
