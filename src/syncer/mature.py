@@ -69,6 +69,7 @@ class MatureChecker(SyncerInterface):
 
         addup_begin_block_number = mature_latest_block_number
         addup_end_block_number = latest_block_number - self._mature_confirm_number
+        self._logger.info(f'addup_begin_block_number:{addup_begin_block_number}, addup_end_block_number:{addup_end_block_number}, calc mature block...')
         items = db_session.query(ImmatureMiningReward)\
             .filter(ImmatureMiningReward.mining_round == self._mining_round)\
             .filter(ImmatureMiningReward.block_number <= addup_end_block_number)\
