@@ -5,7 +5,6 @@ from web3 import Web3
 from decimal import Decimal
 from sqlalchemy import desc
 
-import config
 from contract.perpetual import Perpetual, PositionSide
 from lib.address import Address
 from lib.wad import Wad, DECIMALS
@@ -18,10 +17,11 @@ from eth_utils import big_endian_to_int
 class PositionTracer(SyncerInterface):
     """Sync account's position balance"""
 
-    def __init__(self, perpetual_address, inverse, web3, end_block):
+    def __init__(self, perpetual_address, inverse, perpetual_position_topic, web3, end_block):
         
         self._perpetual_address = web3.toChecksumAddress(perpetual_address)
         self._inverse = inverse
+        self._perpetual_position_topic = perpetual_position_topic
         self._end_block = end_block
         # contract
         self._perpetual = Perpetual(
@@ -112,7 +112,7 @@ class PositionTracer(SyncerInterface):
     ##############################################################################
     def _parse_perpetual_update_position_event_logs(self, block_number):
         event_filter_params = {
-            'topics': [config.PERPETUAL_POSITION_TOPIC],
+            'topics': [self._perpetual_position_topic],
             'address': [self._perpetual_address],
             'fromBlock': block_number,
             'toBlock': block_number,

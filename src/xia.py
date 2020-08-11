@@ -29,7 +29,7 @@ def create_watcher():
     session.rollback()
 
     share_token_tracer = ERC20Tracer(config.XIA_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
-    position_tracer = PositionTracer(config.PERPETUAL_ADDRESS, config.PERPETUAL_INVERSE, web3, mining_round.end_block_number)
+    position_tracer = PositionTracer(config.ETH_PERPETUAL_ADDRESS, config.ETH_PERPETUAL_INVERSE, config.ETH_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
     miner = ShareMining(mining_round.begin_block_number, mining_round.end_block_number,
                         mining_round.release_per_block, MINING_ROUND, config.XIA_SHARE_TOKEN_ADDRESS)
     mature_checker = MatureChecker(
