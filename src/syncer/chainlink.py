@@ -11,7 +11,7 @@ from model import ChainLinkPriceEvent
 from .types import SyncerInterface
 
 
-class ETHPriceTracer(SyncerInterface):
+class PriceTracer(SyncerInterface):
     """Sync the balance of ERC20 tokens by parsing the ERC20 events"""
 
     def __init__(self, chain_link_address, web3):

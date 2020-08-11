@@ -10,6 +10,7 @@ import config
 from model.db import db_engine
 from model.orm import MiningRound
 from syncer.erc20 import ERC20Tracer
+from syncer.chainlink import LinkPriceTracer
 from syncer.position import PositionTracer
 from syncer.mature import MatureChecker
 from syncer.rewards import ShareMining
@@ -27,15 +28,32 @@ def create_watcher():
         MiningRound.round == MINING_ROUND).one()
     session.rollback()
 
+    # eth perp contract
     eth_perp_share_token_tracer = ERC20Tracer(config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
+    eth_perp_position_tracer = PositionTracer(config.ETH_PERPETUAL_ADDRESS, config.ETH_PERPETUAL_INVERSE, config.ETH_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
+
+    # uniswap contract
     uniswap_mcb_share_token_tracer = ERC20Tracer(config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
-    position_tracer = PositionTracer(config.PERPETUAL_ADDRESS, config.PERPETUAL_INVERSE, web3, mining_round.end_block_number)
+
+    # link perp contract
+    link_perp_share_token_tracer = ERC20Tracer(config.LINK_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
+    link_perp_position_tracer = PositionTracer(config.LINK_PERPETUAL_ADDRESS, config.LINK_PERPETUAL_INVERSE, config.LINK_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
+
+    # btc perp contract
+    btc_perp_share_token_tracer = ERC20Tracer(config.BTC_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
+    chainlink_btc_price_tracer = LinkPriceTracer(config.CHAINLINK_BTC_USD_ADDRESS, web3)
+    btc_perp_position_tracer = PositionTracer(config.BTC_PERPETUAL_ADDRESS, config.BTC_PERPETUAL_INVERSE, config.BTC_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
+
     miner = ShareMining(mining_round.begin_block_number, mining_round.end_block_number, mining_round.release_per_block,
                          MINING_ROUND, config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS, config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS)
     mature_checker = MatureChecker(
         config.MATURE_CONFIRM, config.MATURE_CHECKPOINT_INTERVAL, MINING_ROUND)
 
-    syncers = [eth_perp_share_token_tracer, uniswap_mcb_share_token_tracer, position_tracer, miner, mature_checker]
+    syncers = [uniswap_mcb_share_token_tracer, eth_perp_share_token_tracer, eth_perp_position_tracer, 
+            link_perp_share_token_tracer, link_perp_position_tracer,
+            btc_perp_share_token_tracer, chainlink_btc_price_tracer, btc_perp_position_tracer,
+            miner, mature_checker]
+
     return Watcher(mining_round.watcher_id, syncers, web3, db_engine, mining_round.end_block_number)
 
 def serv():
