@@ -35,7 +35,7 @@ def create_watcher():
     mature_checker = MatureChecker(
         config.MATURE_CONFIRM, config.MATURE_CHECKPOINT_INTERVAL, MINING_ROUND)
 
-    syncers = [ETH_price_tracer, share_token_tracer, position_tracer, miner, mature_checker]
+    syncers = [share_token_tracer, position_tracer, miner, mature_checker]
     return Watcher(mining_round.watcher_id, syncers, web3, db_engine, mining_round.end_block_number)
 
 
