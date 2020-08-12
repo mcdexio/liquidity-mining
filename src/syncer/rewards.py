@@ -22,17 +22,18 @@ class ShareMining(SyncerInterface):
     reward_i = reward_per_block * (share_token_balance_i / (share_token_total_supply) )
     """
 
-    def __init__(self, begin_block, end_block, reward_per_block, mining_round, eth_perp_share_token_address, uniswap_mcb_share_token_address=''):
+    def __init__(self, begin_block, end_block, reward_per_block, mining_round):
         self._begin_block = begin_block
         self._end_block = end_block
         self._reward_per_block = reward_per_block
-        self._eth_perp_share_token_address = eth_perp_share_token_address.lower()
-        if uniswap_mcb_share_token_address:
-            self._uniswap_mcb_share_token_address = uniswap_mcb_share_token_address.lower()
         self._mining_round = mining_round
-        self._rebalance_hard_fork_block_number = config.REBALANCE_HARD_FORK_BLOCK_NUMBER
-        self._reward_link_pool_block_number = config.REWARD_LINK_POOL_BLOCK_NUMBER
-        self._reward_btc_pool_block_number = config.REWARD_BTC_POOL_BLOCK_NUMBER
+
+        self._eth_perp_share_token_address = config.ETH_PERP_SHARE_TOKEN_ADDRESS.lower()
+        self._uniswap_mcb_share_token_address = config.LINK_PERP_SHARE_TOKEN_ADDRESS.lower()
+        self._xia_rebalance_hard_fork_block_number = config.XIA_REBALANCE_HARD_FORK_BLOCK_NUMBER
+        self._shang_reward_link_pool_block_number = config.SHANG_REWARD_LINK_POOL_BLOCK_NUMBER
+        self._shang_reward_btc_pool_block_number = config.SHANG_REWARD_BTC_POOL_BLOCK_NUMBER
+
         self._logger = logging.getLogger()
 
     def _get_token_map(self, share_token_address, db_session):
@@ -131,12 +132,12 @@ class ShareMining(SyncerInterface):
         self._logger.info(f'sync mining reward, block_number:{block_number}, holders:{len(share_token_items)}, share_token: {pool_share_token_address}')
         
         # amm pool ETH_PERP, use effective share after rebalance_hard_fork block number
-        if pool_name == 'ETH_PERP' and block_number >= self._rebalance_hard_fork_block_number:
+        if pool_name == 'ETH_PERP' and block_number >= self._xia_rebalance_hard_fork_block_number:
             effective_share_dict, total_effective_share_amount = self._get_effective_share_info(pool_share_token_address, share_token_items, total_share_token_amount, db_session)
 
         for item in share_token_items:
             holder = item.holder
-            if pool_name == 'ETH_PERP' and block_number >= self._rebalance_hard_fork_block_number:
+            if pool_name == 'ETH_PERP' and block_number >= self._xia_rebalance_hard_fork_block_number:
                 holder_effective_share_amount = effective_share_dict.get(holder, Decimal(0))
                 wad_reward = Wad.from_number(pool_reward_percent) * Wad.from_number(self._reward_per_block) * Wad.from_number(holder_effective_share_amount) / Wad.from_number(total_effective_share_amount)
                 reward = Decimal(str(wad_reward))
@@ -201,7 +202,6 @@ class ShareMining(SyncerInterface):
             amm_usd_value = abs(amm_position) * chain_link_price
         return amm_usd_value
 
-
     def _get_pool_value_info(self, block_number, pool_info, pool_reward_percent, db_session):
         pool_value_info = {}
         pools_total_effective_value = 0
@@ -233,7 +233,7 @@ class ShareMining(SyncerInterface):
             ).all()
             pool_value_info[pool_name]['share_token_items'] = share_token_items
 
-            if pool_type == 'AMM' and block_number >= self._rebalance_hard_fork_block_number:
+            if pool_type == 'AMM' and block_number >= self._xia_rebalance_hard_fork_block_number:
                 effective_share_dict, total_effective_share_amount = self._get_effective_share_info(pool_share_token_address, share_token_items, total_share_token_amount, db_session)
                 pool_value_info[pool_name]['effective_share_dict'] = effective_share_dict
                 pool_value_info[pool_name]['total_effective_share_amount'] = total_effective_share_amount
@@ -244,12 +244,12 @@ class ShareMining(SyncerInterface):
             else:
                 # include two case: 
                 # 1) pool_type is UNISWAP;
-                # 2) pool_type is AMM and block number before _rebalance_hard_fork_block_number;
+                # 2) pool_type is AMM and block number before _xia_rebalance_hard_fork_block_number;
                 pool_reward = Wad.from_number(pool_reward_percent) * Wad.from_number(self._reward_per_block)
                 pool_value_info[pool_name]['pool_reward'] = pool_reward
         
         # update AMM pool reward
-        if pool_type == 'AMM' and block_number >= self._rebalance_hard_fork_block_number:
+        if pool_type == 'AMM' and block_number >= self._xia_rebalance_hard_fork_block_number:
             for pool_name in pool_value_info.keys():
                 pool_effective_usd_value = pool_value_info[pool_name]['pool_effective_usd_value']
                 pool_reward = Wad.from_number(pool_reward_percent) * Wad.from_number(self._reward_per_block) * pool_effective_usd_value / Wad.from_number(pools_total_effective_value)
@@ -272,19 +272,18 @@ class ShareMining(SyncerInterface):
                 immature_summary_dict[item.holder] = item    
 
             total_share_token_amount = pool_value_info[pool_name]['total_share_token_amount']
-            pool_type = pool_value_info[pool_name]['pool_type']
             share_token_items = pool_value_info[pool_name]['share_token_items']
+            pool_type = pool_value_info[pool_name]['pool_type']
             pool_reward = pool_value_info[pool_name]['pool_reward']
-
-            # amm pool AMM, use effective share after rebalance_hard_fork block number
-            if pool_type == 'AMM' and block_number >= self._rebalance_hard_fork_block_number:
-                effective_share_dict = pool_value_info[pool_name]['effective_share_dict']
-                total_effective_share_amount = pool_value_info[pool_name]['total_effective_share_amount']
 
             for item in share_token_items:
                 holder = item.holder
-                if pool_type == 'AMM' and block_number >= self._rebalance_hard_fork_block_number:
-                    holder_effective_share_amount = effective_share_dict.get(holder, Decimal(0))
+                if item.balance == Decimal(0):
+                    continue
+                # amm pool, use effective share after xia_rebalance_hard_fork block number
+                if pool_type == 'AMM' and block_number >= self._xia_rebalance_hard_fork_block_number:
+                    total_effective_share_amount = pool_value_info[pool_name]['total_effective_share_amount']
+                    holder_effective_share_amount = pool_value_info[pool_name]['effective_share_dict'].get(holder, Decimal(0))
                     wad_reward = pool_reward * Wad.from_number(holder_effective_share_amount) / Wad.from_number(total_effective_share_amount)
                     reward = Decimal(str(wad_reward))
                 else:
@@ -326,7 +325,7 @@ class ShareMining(SyncerInterface):
             #self._calculate_pool_reward(block_number, pool_name, pool_share_token_address, pool_reward_percent, db_session)
             
             pool_info = {}
-            pool_info['ETH_PERP'] = config.XIA_ETH_PERP_SHARE_TOKEN_ADDRESS
+            pool_info['ETH_PERP'] = config.ETH_PERP_SHARE_TOKEN_ADDRESS
             amms_total_reward_percent = 1
             pool_reward_percent = amms_total_reward_percent  
             self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)
@@ -337,16 +336,17 @@ class ShareMining(SyncerInterface):
             #pool_reward_percent = amms_reward_percent
             #self._calculate_pool_reward(block_number, pool_name, pool_share_token_address, pool_reward_percent, db_session)
             
+            # AMM pools
             pool_info = {}
-            pool_info['ETH_PERP'] = config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS
-            if block_number >= self._reward_link_pool_block_number:
+            pool_info['ETH_PERP'] = config.ETH_PERP_SHARE_TOKEN_ADDRESS
+            if block_number >= self._shang_reward_link_pool_block_number:
                 # add amm link pool reward
                 pool_info['LINK_PERP'] = config.LINK_PERP_SHARE_TOKEN_ADDRESS
-            if block_number >= self._reward_btc_pool_block_number:
+            if block_number >= self._shang_reward_btc_pool_block_number:
                 # add amm btc pool reward
                 pool_info['BTC_PERP'] = config.BTC_PERP_SHARE_TOKEN_ADDRESS
             amms_total_reward_percent = 0.75
-            pool_reward_percent = amms_total_reward_percent              
+            pool_reward_percent = amms_total_reward_percent            
             self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)
             
             #pool_name = 'UNISWAP_MCB_ETH'
@@ -355,6 +355,7 @@ class ShareMining(SyncerInterface):
             #pool_reward_percent = uniswap_mcb_reward_percent
             #self._calculate_pool_reward(block_number, pool_name, pool_share_token_address, pool_reward_percent, db_session)
             
+            # UNISWAP pool
             pool_info = {}
             pool_info['UNISWAP_MCB_ETH'] = config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS
             uniswap_mcb_reward_percent = 0.25
