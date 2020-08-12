@@ -169,7 +169,7 @@ class ShareMining(SyncerInterface):
 
     def _get_chain_link_price(self, block_number, pool_name, db_session):
         if pool_name == 'BTC_PERP':
-            link_price_address = config.CHAINLINK_BTC_USD_ADDRESS
+            link_price_address = config.CHAINLINK_BTC_USD_ADDRESS.lower()
         link_price_item = db_session.query(ChainLinkPriceEvent)\
             .filter(ChainLinkPriceEvent.chain_link_address == link_price_address)\
             .filter(ChainLinkPriceEvent.block_number <= block_number)\
@@ -193,7 +193,6 @@ class ShareMining(SyncerInterface):
             .first()
         if amm_proxy_item:
             amm_position = amm_proxy_item.balance
-
         if inverse:
             amm_usd_value = abs(amm_position)
         else:
@@ -204,7 +203,7 @@ class ShareMining(SyncerInterface):
 
     def _get_pool_value_info(self, block_number, pool_info, pool_reward_percent, db_session):
         pool_value_info = {}
-        pools_total_effective_value = 0
+        pools_total_effective_value = Wad(0)
         for pool_name, pool_share_token_address in pool_info.items():
             if pool_name not in pool_value_info.keys():
                 pool_value_info[pool_name] = {}
@@ -215,7 +214,7 @@ class ShareMining(SyncerInterface):
                 pool_value_info[pool_name]['pool_type'] = pool_type
                 if pool_name == 'BTC_PERP':
                     pool_contract_inverse = False
-                elif pool_name in ():
+                elif pool_name in ('ETH_PERP', 'LINK_PERP'):
                     pool_contract_inverse = True
             elif pool_name == 'UNISWAP_MCB_ETH':
                 pool_type = 'UNISWAP'
@@ -325,7 +324,7 @@ class ShareMining(SyncerInterface):
             #self._calculate_pool_reward(block_number, pool_name, pool_share_token_address, pool_reward_percent, db_session)
             
             pool_info = {}
-            pool_info['ETH_PERP'] = config.ETH_PERP_SHARE_TOKEN_ADDRESS
+            pool_info['ETH_PERP'] = config.ETH_PERP_SHARE_TOKEN_ADDRESS.lower()
             amms_total_reward_percent = 1
             pool_reward_percent = amms_total_reward_percent  
             self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)
@@ -338,13 +337,13 @@ class ShareMining(SyncerInterface):
             
             # AMM pools
             pool_info = {}
-            pool_info['ETH_PERP'] = config.ETH_PERP_SHARE_TOKEN_ADDRESS
+            pool_info['ETH_PERP'] = config.ETH_PERP_SHARE_TOKEN_ADDRESS.lower()
             if block_number >= self._shang_reward_link_pool_block_number:
                 # add amm link pool reward
-                pool_info['LINK_PERP'] = config.LINK_PERP_SHARE_TOKEN_ADDRESS
+                pool_info['LINK_PERP'] = config.LINK_PERP_SHARE_TOKEN_ADDRESS.lower()
             if block_number >= self._shang_reward_btc_pool_block_number:
                 # add amm btc pool reward
-                pool_info['BTC_PERP'] = config.BTC_PERP_SHARE_TOKEN_ADDRESS
+                pool_info['BTC_PERP'] = config.BTC_PERP_SHARE_TOKEN_ADDRESS.lower()
             amms_total_reward_percent = 0.75
             pool_reward_percent = amms_total_reward_percent            
             self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)
@@ -357,7 +356,7 @@ class ShareMining(SyncerInterface):
             
             # UNISWAP pool
             pool_info = {}
-            pool_info['UNISWAP_MCB_ETH'] = config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS
+            pool_info['UNISWAP_MCB_ETH'] = config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS.lower()
             uniswap_mcb_reward_percent = 0.25
             pool_reward_percent = uniswap_mcb_reward_percent
             self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)
