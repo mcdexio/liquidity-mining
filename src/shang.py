@@ -5,6 +5,7 @@ import logging
 from sqlalchemy.orm import sessionmaker
 from web3 import HTTPProvider, Web3
 from web3.middleware import construct_sign_and_send_raw_middleware, geth_poa_middleware
+from typing import List, Tuple, Dict
 
 import config
 from model.db import db_engine
@@ -29,7 +30,7 @@ def create_watcher():
     session.rollback()
 
     # eth perp contract
-    eth_perp_share_token_tracer = ERC20Tracer(config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
+    eth_perp_share_token_tracer = ERC20Tracer(config.ETH_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
     eth_perp_position_tracer = PositionTracer(config.ETH_PERPETUAL_ADDRESS, config.ETH_PERPETUAL_INVERSE, config.ETH_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
 
     # uniswap contract
@@ -45,11 +46,11 @@ def create_watcher():
     btc_perp_position_tracer = PositionTracer(config.BTC_PERPETUAL_ADDRESS, config.BTC_PERPETUAL_INVERSE, config.BTC_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
 
     miner = ShareMining(mining_round.begin_block_number, mining_round.end_block_number, mining_round.release_per_block,
-                         MINING_ROUND, config.SHANG_ETH_PERP_SHARE_TOKEN_ADDRESS, config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS)
+                         MINING_ROUND)
     mature_checker = MatureChecker(
         config.MATURE_CONFIRM, config.MATURE_CHECKPOINT_INTERVAL, MINING_ROUND)
 
-    syncers = [uniswap_mcb_share_token_tracer, eth_perp_share_token_tracer, eth_perp_position_tracer, 
+    syncers = [eth_perp_share_token_tracer, eth_perp_position_tracer, uniswap_mcb_share_token_tracer,
             link_perp_share_token_tracer, link_perp_position_tracer,
             btc_perp_share_token_tracer, chainlink_btc_price_tracer, btc_perp_position_tracer,
             miner, mature_checker]
@@ -65,16 +66,18 @@ def serv():
         elif synced == 0:
             return
 
-def sync_extradata(extra_data: str, end_block_number: int, watcher_id: int,  share_token: str):
+def sync_extradata(extra_data: str, end_block_number: int, watcher_id: int,  share_tokens: List(str)):
     logger = logging.getLogger()
-    logger.info(f'start sync extra_data:{extra_data},  end_block_number:{end_block_number},  watcher_id:{watcher_id},  share_token:{share_token}')
+    logger.info(f'start sync extra_data:{extra_data},  end_block_number:{end_block_number},  watcher_id:{watcher_id},  share_token:{','.join(share_tokens)}')
 
     web3 = Web3(HTTPProvider(endpoint_uri=config.ETH_RPC_URL,
                              request_kwargs={"timeout": config.ETH_RPC_TIMEOUT}))
     web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-    share_token_tracer = ERC20Tracer(share_token, web3, end_block_number)
-    syncers = [share_token_tracer]
+    syncers = []
+    for share_token in share_tokens:
+        share_token_tracer = ERC20Tracer(share_token, web3, end_block_number)
+        syncers.append[share_token_tracer]
     watcher = Watcher(watcher_id, syncers, web3, db_engine, end_block_number)
     while True:
         synced = watcher.sync()
@@ -104,8 +107,14 @@ def main():
             # calculate shang reward need sync uniswap mcb share event
             end_block_number = 10624999  #xia end number
             watcher_id = 2
-            share_token = config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS
-            sync_extradata(args.extradata, end_block_number, watcher_id, share_token)
+            share_tokens = [config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS]
+            sync_extradata(args.extradata, end_block_number, watcher_id, share_tokens)
+        elif args.extradata == 'link_btc_perp':
+            # sync link and btc share token event and position event
+            end_block_number = 10624999  #shang tmp number
+            watcher_id = 101
+            share_tokens = [config.LINK_PERP_SHARE_TOKEN_ADDRESS, config.BTC_PERP_SHARE_TOKEN_ADDRESS]
+            sync_extradata(args.extradata, end_block_number, watcher_id, share_tokens)
     else:
         serv()
 
