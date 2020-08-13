@@ -1,6 +1,6 @@
 import logging
 import logging.config
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from web3 import Web3
 from decimal import Decimal, getcontext, ROUND_DOWN
 
@@ -171,7 +171,7 @@ class ShareMining(SyncerInterface):
         link_price_item = db_session.query(ChainLinkPriceEvent)\
             .filter(ChainLinkPriceEvent.chain_link_address == link_price_address)\
             .filter(ChainLinkPriceEvent.block_number <= block_number)\
-            .order_by(ChainLinkPriceEvent.block_number.desc())\
+            .order_by(desc(ChainLinkPriceEvent.block_number))\
             .first()
         if link_price_item is None:
             raise Exception('link price still not sync!')
