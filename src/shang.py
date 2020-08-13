@@ -85,6 +85,26 @@ def sync_extradata(extra_data: str, end_block_number: int, watcher_id: int,  sha
             time.sleep(config.WATCHER_CHECK_INTERVAL)
         elif synced == 0:
             return
+            
+def sync_link_price(extra_data: str, end_block_number: int, watcher_id: int,  tokens: List[str]):
+    logger = logging.getLogger()
+    logger.info(f'start sync extra_data:{extra_data},  end_block_number:{end_block_number},  watcher_id:{watcher_id},  share_token:{",".join(tokens)}')
+
+    web3 = Web3(HTTPProvider(endpoint_uri=config.ETH_RPC_URL,
+                             request_kwargs={"timeout": config.ETH_RPC_TIMEOUT}))
+    web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+    syncers = []
+    for token in tokens:
+        chainlink_price_tracer = LinkPriceTracer(token, web3)
+        syncers.append(chainlink_price_tracer)
+    watcher = Watcher(watcher_id, syncers, web3, db_engine, end_block_number)
+    while True:
+        synced = watcher.sync()
+        if synced < 0:
+            time.sleep(config.WATCHER_CHECK_INTERVAL)
+        elif synced == 0:
+            return
 
 def rollback(synced_block_number: int):
     watcher = create_watcher()
@@ -115,6 +135,12 @@ def main():
             watcher_id = 101
             share_tokens = [config.LINK_PERP_SHARE_TOKEN_ADDRESS, config.BTC_PERP_SHARE_TOKEN_ADDRESS]
             sync_extradata(args.extradata, end_block_number, watcher_id, share_tokens)
+        elif args.extradata == 'link_price':
+            # sync link price
+            end_block_number = 10724999  #shang tmp number
+            watcher_id = 102
+            tokens = [config.CHAINLINK_BTC_USD_ADDRESS]
+            sync_link_price(args.extradata, end_block_number, watcher_id, tokens)            
     else:
         serv()
 
