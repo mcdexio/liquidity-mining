@@ -39,10 +39,10 @@ class LinkPriceTracer(SyncerInterface):
         price_updated_filter = self._chain_link.contract.events.AnswerUpdated().createFilter(
             fromBlock=Web3.toHex(block_number), toBlock=Web3.toHex(block_number))
         all_filter_events = price_updated_filter.get_all_entries()
-        self._logger.info(f'sync chain link eth price event, block_number:{block_number}, events:{len(all_filter_events)}')
+        self._logger.info(f'sync chain link price event, block_number:{block_number}, events:{len(all_filter_events)}')
         for row in all_filter_events:
             price_info = row.args
-            current_price = Decimal(price_info.get('current'))*Decimal(CHAINLINK_DECIMALS)
+            current_price = Decimal(price_info.get('current'))/Decimal(10**CHAINLINK_DECIMALS)
             cur_block_number = row.blockNumber
             cur_transaction_hash = row.transactionHash
             event_index = row.logIndex
