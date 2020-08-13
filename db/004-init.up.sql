@@ -15,4 +15,4 @@ INSERT INTO perp_share_amm_proxy_maps (perp_addr, share_addr, amm_addr, proxy_ad
 /* btc contract info */ 
 INSERT INTO perp_share_amm_proxy_maps (perp_addr, share_addr, amm_addr, proxy_addr) VALUES ('0xe3c29ce0c36863fd682f1afe464781df6bebaa0a ', '0xdcd1aa80661756c9d92317115e356f5bde26977b', '0x028fb01ffafe25e278ebb467f69bd79a928cf25e', '0xc32e180d105034c1abaf6604d74efcce6578e3f2');
 
-INSERT INTO watchers (id, initial_block_number, synced_block_number) VALUES (101, 10637097, 10637096);
+/*INSERT INTO watchers (id, initial_block_number, synced_block_number) VALUES (101, 10637097, 10637096);*/
