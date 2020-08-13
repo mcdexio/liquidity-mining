@@ -85,13 +85,11 @@ class PositionTracer(SyncerInterface):
         items = db_session.query(PositionBalance)\
             .filter(PositionBalance.block_number > block_number)\
             .filter(PositionBalance.perpetual_address == self._perpetual_address.lower())\
-            .filter(PositionBalance.watcher_id == watcher_id)\
             .all()
         for item in items:
             # update position_balances table
             position_event = db_session.query(PositionEvent)\
                 .filter(PositionEvent.holder == item.holder)\
-                .filter(PositionEvent.watcher_id == watcher_id)\
                 .filter(PositionEvent.perpetual_address == item.perpetual_address)\
                 .filter(PositionEvent.block_number <= block_number)\
                 .order_by(desc(PositionEvent.block_number), desc(PositionEvent.event_index))\
@@ -103,7 +101,7 @@ class PositionTracer(SyncerInterface):
                 item.block_number = position_event.block_number
                 db_session.add(item)
         
-        db_session.query(PositionEvent).filter(PositionEvent.perpetual_address == self._perpetual_address.lower()).filter(PositionEvent.watcher_id == watcher_id).\
+        db_session.query(PositionEvent).filter(PositionEvent.perpetual_address == self._perpetual_address.lower()).\
             filter(PositionEvent.block_number > block_number).delete(synchronize_session=False)
 
     ################################ NOTICE ######################################
