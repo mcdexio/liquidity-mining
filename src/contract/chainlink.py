@@ -4,7 +4,7 @@ from lib.contract import Contract
 from lib.address import Address
 from lib.wad import Wad
 
-CHAINLINK_DECIMALS = 10**10
+CHAINLINK_DECIMALS = 8
 
 
 class ChainLink(Contract):
@@ -20,7 +20,7 @@ class ChainLink(Contract):
         self.contract = self._get_contract(web3, self.abi, address)
 
     def latestAnswer(self):
-        price = self.contract.functions.latestAnswer().call()*CHAINLINK_DECIMALS
+        price = self.contract.functions.latestAnswer().call()*10**CHAINLINK_DECIMALS
         return price
 
     
