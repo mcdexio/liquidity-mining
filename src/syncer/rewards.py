@@ -28,7 +28,7 @@ class ShareMining(SyncerInterface):
         self._mining_round = mining_round
 
         self._eth_perp_share_token_address = config.ETH_PERP_SHARE_TOKEN_ADDRESS.lower()
-        self._uniswap_mcb_share_token_address = config.LINK_PERP_SHARE_TOKEN_ADDRESS.lower()
+        self._uniswap_mcb_share_token_address = config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS.lower()
         self._xia_rebalance_hard_fork_block_number = config.XIA_REBALANCE_HARD_FORK_BLOCK_NUMBER
         self._shang_reward_link_pool_block_number = config.SHANG_REWARD_LINK_POOL_BLOCK_NUMBER
         self._shang_reward_btc_pool_block_number = config.SHANG_REWARD_BTC_POOL_BLOCK_NUMBER
@@ -101,7 +101,6 @@ class ShareMining(SyncerInterface):
                 func.sum(TokenBalance.balance)
         ).first()
         if result[0] is None:
-            self._logger.warning(f'opps, share_token {share_token_address} total amount is zero!')
             total_share_token_amount = 0
         else:
             total_share_token_amount = result[0]
