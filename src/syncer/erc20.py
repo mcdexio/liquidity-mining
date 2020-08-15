@@ -63,7 +63,7 @@ class ERC20Tracer(SyncerInterface):
         transfer_filter = self._erc20_token.contract.events.Transfer().createFilter(
             fromBlock=Web3.toHex(block_number), toBlock=Web3.toHex(block_number))
         all_filter_events = transfer_filter.get_all_entries()
-        self._logger.info(f'sync erc20: {self._erc20_token} event, block_number:{block_number}, events:{len(all_filter_events)}')
+        self._logger.info(f'sync erc20: {self._token_address} event, block_number:{block_number}, events:{len(all_filter_events)}')
         for row in all_filter_events:
             transfer_info = row.args
             from_addr = transfer_info.get('from').lower()
