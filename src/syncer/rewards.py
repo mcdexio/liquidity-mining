@@ -235,7 +235,11 @@ class ShareMining(SyncerInterface):
                 pool_value_info[pool_name]['effective_share_dict'] = effective_share_dict
                 pool_value_info[pool_name]['total_effective_share_amount'] = total_effective_share_amount
                 pool_usd_value = self._get_pool_usd_value(block_number, pool_name, pool_share_token_address, pool_contract_inverse, db_session)
-                pool_effective_usd_value = pool_usd_value * Wad.from_number(total_effective_share_amount) / Wad.from_number(total_share_token_amount)    
+                if total_share_token_amount != 0:
+                    pool_effective_usd_value = pool_usd_value * Wad.from_number(total_effective_share_amount) / Wad.from_number(total_share_token_amount)    
+                else:
+                    self._logger.warning(f'opps, pool:{pool_name}, share_token total amount is zero, skip it!')
+                    pool_effective_usd_value = 0
                 pool_value_info[pool_name]['pool_effective_usd_value'] = pool_effective_usd_value
                 pools_total_effective_value +=  pool_effective_usd_value
             else:
@@ -269,7 +273,12 @@ class ShareMining(SyncerInterface):
                 immature_summary_dict[item.holder] = item    
 
             total_share_token_amount = pool_value_info[pool_name]['total_share_token_amount']
+            if total_share_token_amount == 0:
+                self._logger.warning(f'opps, pool:{pool_name}, share_token total amount is zero, skip it!')
+                continue
+
             share_token_items = pool_value_info[pool_name]['share_token_items']
+
             pool_type = pool_value_info[pool_name]['pool_type']
             pool_reward = pool_value_info[pool_name]['pool_reward']
 
