@@ -43,9 +43,9 @@ class ShareMining(SyncerInterface):
             .first()
         if item is not None:
             token_map[share_token_address] = {
-                'perp_addr': item.perp_addr,
-                'amm_addr': item.amm_addr,
-                'amm_proxy_addr': item.proxy_addr,
+                'perp_addr': item.perp_addr.strip(),
+                'amm_addr': item.amm_addr.strip(),
+                'amm_proxy_addr': item.proxy_addr.strip(),
             }
         return token_map
 
@@ -65,7 +65,7 @@ class ShareMining(SyncerInterface):
             .all()
         for item in position_items:
             position_holder_dict[item.holder] = item.balance
-        amm_position = position_holder_dict[amm_proxy_addr]
+        amm_position = position_holder_dict.get(amm_proxy_addr, Decimal(0))
 
         for holder, holder_position_in_margin_account in position_holder_dict.items():
             holder_share_token_amount = share_token_dict.get(holder)
@@ -239,7 +239,7 @@ class ShareMining(SyncerInterface):
                     pool_effective_usd_value = pool_usd_value * Wad.from_number(total_effective_share_amount) / Wad.from_number(total_share_token_amount)    
                 else:
                     self._logger.warning(f'opps, pool:{pool_name}, share_token total amount is zero, skip it!')
-                    pool_effective_usd_value = 0
+                    pool_effective_usd_value = Wad(0)
                 pool_value_info[pool_name]['pool_effective_usd_value'] = pool_effective_usd_value
                 pools_total_effective_value +=  pool_effective_usd_value
             else:
