@@ -123,6 +123,7 @@ def main():
     if args.rollback is not None:
         rollback(args.rollback)
     elif args.extradata is not None:
+        # cmd tool, only use for recover out of sync data, end_block_number should be config
         if args.extradata == 'uniswap_mcb_share':
             # calculate shang reward need sync uniswap mcb share event
             end_block_number = 10624999  #xia end number
@@ -140,7 +141,12 @@ def main():
             end_block_number = 10724999  #shang tmp number
             watcher_id = 102
             tokens = [config.CHAINLINK_BTC_USD_ADDRESS]
-            sync_link_price(args.extradata, end_block_number, watcher_id, tokens)            
+            sync_link_price(args.extradata, end_block_number, watcher_id, tokens)
+        elif args.extradata == 'mcb_token':
+            end_block_number = 10727499  #shang end number
+            watcher_id = 103
+            share_tokens = [config.MCB_TOKEN_ADDRESS]
+            sync_extradata(args.extradata, end_block_number, watcher_id, share_tokens)
     else:
         serv()
 
