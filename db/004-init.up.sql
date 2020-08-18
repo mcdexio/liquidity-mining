@@ -16,3 +16,5 @@ INSERT INTO perp_share_amm_proxy_maps (perp_addr, share_addr, amm_addr, proxy_ad
 INSERT INTO perp_share_amm_proxy_maps (perp_addr, share_addr, amm_addr, proxy_addr) VALUES ('0xe3c29ce0c36863fd682f1afe464781df6bebaa0a', '0xdcd1aa80661756c9d92317115e356f5bde26977b', '0x028fb01ffafe25e278ebb467f69bd79a928cf25e', '0xc32e180d105034c1abaf6604d74efcce6578e3f2');
 
 INSERT INTO watchers (id, initial_block_number, synced_block_number) VALUES (103, 10393025, 10393024);
+
+update mining_rounds set pool_supply = '[{"name": "ETH_PERP", "supply": 153750, "type": 1}, {"name": "LINK_PERP", "supply": 153750, "type": 1}, {"name":"UNISWAP_MCB_ETH", "supply": 51250, "type": 2}]' where round='SHANG';
