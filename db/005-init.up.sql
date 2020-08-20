@@ -1,4 +1,4 @@
 INSERT INTO watchers (id, initial_block_number, synced_block_number) VALUES (4, 10727500, 10727499);
 
 INSERT INTO mining_rounds (round, begin_block_number, end_block_number, supply, release_per_block, watcher_id, start_time, end_time, pool_supply) 
-    VALUES ('ZHOU', 10727500, 10829999, 205000, 2, 4, '2020-08-25', '2020-09-08', '[{"name": "ETH_PERP", "supply": 153750, "type": 1}, {"name": "LINK_PERP", "supply": 153750, "type": 1}, {"name":"UNISWAP_MCB_ETH", "supply": 51250, "type": 2}]');
+    VALUES ('ZHOU', 10727500, 10829999, 205000, 2, 4, '2020-08-25', '2020-09-09', '[{"name": "ETH_PERP", "supply": 153750, "type": 1}, {"name": "LINK_PERP", "supply": 153750, "type": 1}, {"name":"UNISWAP_MCB_ETH", "supply": 51250, "type": 2}]');
