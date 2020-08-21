@@ -303,8 +303,11 @@ class ShareMining(SyncerInterface):
             n = 102500
         M = Decimal(m)
         N = Decimal(n)
-
-        mcb_weight = holder_mcb_balance / (reward * N)
+        
+        if reward == Decimal(0):
+            mcb_weight = Decimal(0)
+        else:
+            mcb_weight = holder_mcb_balance / (reward * N)
         if mcb_weight < 1:
             reward_factor = Decimal(1) + mcb_weight * M
         else:
