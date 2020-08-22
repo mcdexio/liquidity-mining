@@ -9,6 +9,20 @@
 - Begin Block: 10,420,000
 - End Block: 10,624,999
 
+### 2. SHANG(商)
+
+- Total Supply: 410,000 MCB
+- Release: 2 MCB / Block
+- Begin Block: 10,625,000
+- End Block: 10,727,499
+
+### 3. ZHOU(周)
+
+- Total Supply: 410,000 MCB
+- Release: 2 MCB / Block
+- Begin Block: 10,727,500
+- End Block: 10,829,999
+
 ## Mining Reward Distribution Rules
 
 1. The mining rewards are calculated in every block.
