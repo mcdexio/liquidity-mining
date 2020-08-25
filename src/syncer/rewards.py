@@ -8,7 +8,7 @@ from contract.erc20 import ERC20Token
 from lib.address import Address
 from lib.wad import Wad
 from model.orm import ImmatureMiningReward, TokenEvent, ImmatureMiningRewardSummary, TokenBalance
-from model.orm import ChainLinkPriceEvent, PerpShareAmmProxyMap, PositionBalance, PositionEvent
+from model.orm import ChainLinkPriceEvent, PerpShareAmmProxyMap, PositionBalance, PositionEvent, TheoryMiningReward
 from watcher import Watcher
 
 import config
@@ -313,7 +313,28 @@ class ShareMining(SyncerInterface):
         else:
             reward_factor = Decimal(1) + M
         return reward_factor
+
+    def _save_theory_mining_reward(self, pool_type, holder_amms_reward_dict, db_session):
+        theory_mining_reward_dict = {}
+        theory_mining_reward_items = db_session.query(TheoryMiningReward)\
+            .filter(TheoryMiningReward.mining_round == self._mining_round)\
+            .all()
+        for item in theory_mining_reward_items:
+            theory_mining_reward_dict[item.holder] = item
         
+        for holder, reward in holder_amms_reward_dict.items():
+            if holder not in theory_mining_reward_dict.keys():
+                theory_mining_reward_item = TheoryMiningReward()
+                theory_mining_reward_item.mining_round = self._mining_round
+                theory_mining_reward_item.pool_type = pool_type
+                theory_mining_reward_item.holder = holder
+                theory_mining_reward_item.mcb_balance = reward
+            else:
+                theory_mining_reward_item = theory_mining_reward_dict[holder]
+                theory_mining_reward_item.mcb_balance = reward
+            db_session.add(theory_mining_reward_item)
+
+
     def _get_holder_reward_weight(self, block_number, pool_value_info, db_session):
         holder_amms_weight_dict = {}
         holder_amms_reward_dict = {}
@@ -343,6 +364,8 @@ class ShareMining(SyncerInterface):
                     else:
                         holder_amms_reward_dict[holder] += reward
         
+        self._save_theory_mining_reward('AMM', holder_amms_reward_dict, db_session)
+
         holder_mcb_balance_dict = self._get_holder_mcb_balance(db_session)
         total_holder_reward_weight = Decimal(0)
         for holder, reward in holder_amms_reward_dict.items():
