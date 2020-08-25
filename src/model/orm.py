@@ -201,3 +201,10 @@ class ChainLinkPriceEvent(Base):
     chain_link_address = Column(String, primary_key=True)
     price =  Column(DECIMAL(78, 18))
     watcher_id = Column(Integer)
+
+class TheoryMiningReward(Base):
+    __tablename__ = "theory_mining_rewards"
+    pool_type = Column(String, primary_key=True)
+    mining_round = Column(String, primary_key=True)
+    holder = Column(String, primary_key=True)
+    mcb_balance = Column(DECIMAL(78, 18))
