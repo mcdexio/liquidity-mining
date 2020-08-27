@@ -166,12 +166,12 @@ class ShareMining(SyncerInterface):
                 pool_value_info[pool_name] = {}
             pool_value_info[pool_name]['pool_share_token_address'] = pool_share_token_address
 
-            if pool_name in ('ETH_PERP', 'LINK_PERP', 'BTC_PERP'):
+            if pool_name in ('ETH_PERP', 'LINK_PERP', 'BTC_PERP', 'COMP_PERP', 'LEND_PERP', 'SNX_PERP'):
                 pool_type = 'AMM'
                 pool_value_info[pool_name]['pool_type'] = pool_type
                 if pool_name == 'BTC_PERP':
                     pool_contract_inverse = False
-                elif pool_name in ('ETH_PERP', 'LINK_PERP'):
+                elif pool_name in ('ETH_PERP', 'LINK_PERP', 'COMP_PERP', 'LEND_PERP', 'SNX_PERP'):
                     pool_contract_inverse = True
             elif pool_name == 'UNISWAP_MCB_ETH':
                 pool_type = 'UNISWAP'
@@ -463,9 +463,6 @@ class ShareMining(SyncerInterface):
             if block_number >= self._shang_reward_link_pool_block_number:
                 # add amm link pool reward
                 pool_info['LINK_PERP'] = config.LINK_PERP_SHARE_TOKEN_ADDRESS.lower()
-            if block_number >= self._shang_reward_btc_pool_block_number:
-                # add amm btc pool reward
-                pool_info['BTC_PERP'] = config.BTC_PERP_SHARE_TOKEN_ADDRESS.lower()
             amms_total_reward_percent = 0.75
             pool_reward_percent = amms_total_reward_percent            
             self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)
@@ -481,9 +478,22 @@ class ShareMining(SyncerInterface):
             pool_info = {}
             pool_info['ETH_PERP'] = config.ETH_PERP_SHARE_TOKEN_ADDRESS.lower()
             pool_info['LINK_PERP'] = config.LINK_PERP_SHARE_TOKEN_ADDRESS.lower()
-            if block_number >= self._shang_reward_btc_pool_block_number:
+            if block_number >= config.ZHOU_REWARD_BTC_POOL_BLOCK_NUMBER:
                 # add amm btc pool reward
                 pool_info['BTC_PERP'] = config.BTC_PERP_SHARE_TOKEN_ADDRESS.lower()
+
+            if block_number >= config.ZHOU_REWARD_COMP_POOL_BLOCK_NUMBER:
+                # add amm comp pool reward
+                pool_info['COMP_PERP'] = config.COMP_PERP_SHARE_TOKEN_ADDRESS.lower()
+
+            if block_number >= config.ZHOU_REWARD_LEND_POOL_BLOCK_NUMBER:
+                # add amm lend pool reward
+                pool_info['LEND_PERP'] = config.LEND_PERP_SHARE_TOKEN_ADDRESS.lower()
+
+            if block_number >= config.ZHOU_REWARD_SNX_POOL_BLOCK_NUMBER:
+                # add amm snx pool reward
+                pool_info['SNX_PERP'] = config.SNX_PERP_SHARE_TOKEN_ADDRESS.lower()
+
             amms_total_reward_percent = 0.75
             pool_reward_percent = amms_total_reward_percent            
             self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)
