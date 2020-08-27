@@ -43,6 +43,18 @@ def create_watcher():
     link_perp_share_token_tracer = ERC20Tracer(config.LINK_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
     link_perp_position_tracer = PositionTracer(config.LINK_PERPETUAL_ADDRESS, config.LINK_PERPETUAL_INVERSE, config.LINK_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
 
+    # comp perp contract
+    comp_perp_share_token_tracer = ERC20Tracer(config.COMP_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
+    comp_perp_position_tracer = PositionTracer(config.COMP_PERPETUAL_ADDRESS, config.COMP_PERPETUAL_INVERSE, config.COMP_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
+
+    # lend perp contract
+    lend_perp_share_token_tracer = ERC20Tracer(config.LEND_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
+    lend_perp_position_tracer = PositionTracer(config.LEND_PERPETUAL_ADDRESS, config.LEND_PERPETUAL_INVERSE, config.LEND_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
+
+    # snx perp contract
+    snx_perp_share_token_tracer = ERC20Tracer(config.SNX_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
+    snx_perp_position_tracer = PositionTracer(config.SNX_PERPETUAL_ADDRESS, config.SNX_PERPETUAL_INVERSE, config.SNX_PERPETUAL_POSITION_TOPIC, web3, mining_round.end_block_number)
+
     # btc perp contract
     btc_perp_share_token_tracer = ERC20Tracer(config.BTC_PERP_SHARE_TOKEN_ADDRESS, web3, mining_round.end_block_number)
     chainlink_btc_price_tracer = LinkPriceTracer(config.CHAINLINK_BTC_USD_ADDRESS, web3)
@@ -55,6 +67,9 @@ def create_watcher():
 
     syncers = [eth_perp_share_token_tracer, eth_perp_position_tracer, uniswap_mcb_share_token_tracer,
             mcb_token_tracer, link_perp_share_token_tracer, link_perp_position_tracer,
+            comp_perp_share_token_tracer, comp_perp_position_tracer,
+            lend_perp_share_token_tracer, lend_perp_position_tracer,
+            snx_perp_share_token_tracer, snx_perp_position_tracer,
             btc_perp_share_token_tracer, chainlink_btc_price_tracer, btc_perp_position_tracer,
             miner, mature_checker]
 
