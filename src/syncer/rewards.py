@@ -164,10 +164,12 @@ class ShareMining(SyncerInterface):
         #for pool_name, pool_share_token_address in pool_info.items():
         for pool_name in pool_info.keys():
             pool_share_token_address = pool_info[pool_name].get('pool_share_token_address')
-            amm_pool_proportion = pool_info[pool_name].get('amm_pool_proportion', 1)
             if pool_name not in pool_value_info.keys():
                 pool_value_info[pool_name] = {}
             pool_value_info[pool_name]['pool_share_token_address'] = pool_share_token_address
+
+            amm_pool_proportion = pool_info[pool_name].get('amm_pool_proportion', 1)
+            pool_value_info[pool_name]['amm_pool_proportion'] = amm_pool_proportion
 
             """
             if pool_name in ('ETH_PERP', 'LINK_PERP', 'BTC_PERP', 'COMP_PERP', 'LEND_PERP', 'SNX_PERP'):
@@ -217,6 +219,7 @@ class ShareMining(SyncerInterface):
         # update AMM pool reward
         if pool_type == 'AMM' and block_number >= self._xia_rebalance_hard_fork_block_number:
             for pool_name in pool_value_info.keys():
+                amm_pool_proportion = pool_value_info[pool_name].get('amm_pool_proportion', 1)
                 pool_effective_usd_value = pool_value_info[pool_name]['pool_effective_usd_value']
                 if block_number >= self._qin_begin_block_number:
                     pool_reward = Wad.from_number(pool_reward_percent) * Wad.from_number(self._reward_per_block) * Wad.from_number(amm_pool_proportion)
