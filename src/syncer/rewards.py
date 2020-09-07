@@ -401,11 +401,16 @@ class ShareMining(SyncerInterface):
         self._logger.info(f'sync mining reward, block_number:{block_number}, pools:{",".join(pool_info.keys())}')
         
         holder_amms_weight_dict = {}
-        if block_number >= self._zhou_begin_block_number: 
-            #holder_amms_weight_dict = self._get_holder_reward_weight(block_number, pool_value_info, db_session)
+        holder_weight_dict = {}
+        if block_number >= self._qin_begin_block_number:
             holder_amms_weight_dict = self._get_holder_amms_reward_weight(block_number, pool_value_info, db_session)
+        elif block_number >= self._zhou_begin_block_number:
+            holder_weight_dict = self._get_holder_reward_weight(block_number, pool_value_info, db_session)
 
         for pool_name in pool_value_info.keys():
+            if block_number >= self._qin_begin_block_number:
+                holder_weight_dict = holder_amms_weight_dict.get(pool_name, {})
+
             # get all immature summary items of pool_name
             immature_summary_dict = {}
             immature_summary_items = db_session.query(ImmatureMiningRewardSummary)\
@@ -430,7 +435,7 @@ class ShareMining(SyncerInterface):
                     continue
                 # amm pool, use effective share after xia_rebalance_hard_fork block number
                 if pool_type == 'AMM' and block_number >= self._xia_rebalance_hard_fork_block_number:
-                    holder_weight = holder_amms_weight_dict[pool_name].get(holder, Decimal(1))
+                    holder_weight = holder_weight_dict.get(holder, Decimal(1))
                     total_effective_share_amount = pool_value_info[pool_name]['total_effective_share_amount']
                     holder_effective_share_amount = pool_value_info[pool_name]['effective_share_dict'].get(holder, Decimal(0))
                     wad_reward = Wad.from_number(holder_weight) * pool_reward * Wad.from_number(holder_effective_share_amount) / Wad.from_number(total_effective_share_amount)
