@@ -383,7 +383,7 @@ class ShareMining(SyncerInterface):
 
             holder_total_pool_reward_weight = Decimal(0)
             for holder, holder_pool_reward in holder_pools_reward[pool_name].items():
-                holder_reward_percent = holder_pool_reward / pool_reward
+                holder_reward_percent = holder_pool_reward / Decimal(str(pool_reward))
                 holder_total_pool_reward = holder_amms_reward_dict.get(holder)
                 holder_mcb_balance = holder_mcb_balance_dict.get(holder, Decimal(0))
                 reward_factor = self._get_holder_reward_factor(holder, holder_total_pool_reward, holder_mcb_balance)
@@ -405,7 +405,7 @@ class ShareMining(SyncerInterface):
         holder_amms_weight_dict = {}
         if block_number >= self._zhou_begin_block_number: 
             #holder_amms_weight_dict = self._get_holder_reward_weight(block_number, pool_value_info, db_session)
-            holder_amms_weight_dict = self._get_holder_reward_weight(block_number, pool_value_info, db_session)
+            holder_amms_weight_dict = self._get_holder_amms_reward_weight(block_number, pool_value_info, db_session)
 
         for pool_name in pool_value_info.keys():
             # get all immature summary items of pool_name
