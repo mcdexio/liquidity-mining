@@ -339,12 +339,72 @@ class ShareMining(SyncerInterface):
 
         return holder_amms_weight_dict
 
+    def _get_holder_amms_reward_weight(self, block_number, pool_value_info, db_session):
+        holder_amms_weight_dict = {}
+        holder_amms_reward_dict = {}
+        holder_mcb_balance_dict = self._get_holder_mcb_balance(db_session)
+        
+        holder_pools_reward = {}
+        for pool_name in pool_value_info.keys():
+            # calc holder in every pool weight
+            holder_reward_dict = {}
+            total_share_token_amount = pool_value_info[pool_name]['total_share_token_amount']
+            if total_share_token_amount == 0:
+                continue
+            share_token_items = pool_value_info[pool_name]['share_token_items']
+            pool_type = pool_value_info[pool_name]['pool_type']
+            pool_reward = pool_value_info[pool_name]['pool_reward']
+
+            for item in share_token_items:
+                holder = item.holder
+                if item.balance == Decimal(0):
+                    continue
+                # amm pool, use effective share after xia_rebalance_hard_fork block number
+                if pool_type == 'AMM' and block_number >= self._xia_rebalance_hard_fork_block_number:
+                    total_effective_share_amount = pool_value_info[pool_name]['total_effective_share_amount']
+                    holder_effective_share_amount = pool_value_info[pool_name]['effective_share_dict'].get(holder, Decimal(0))
+                    wad_reward = pool_reward * Wad.from_number(holder_effective_share_amount) / Wad.from_number(total_effective_share_amount)
+                    reward = Decimal(str(wad_reward))
+                    holder_reward_dict[holder] = reward
+                    if holder not in holder_amms_reward_dict:
+                        holder_amms_reward_dict[holder] = reward
+                    else:
+                        holder_amms_reward_dict[holder] += reward
+            holder_pools_reward[pool_name] = holder_reward_dict
+
+        self._save_theory_mining_reward('AMM', holder_amms_reward_dict, db_session)
+
+        holder_mcb_balance_dict = self._get_holder_mcb_balance(db_session)
+        for pool_name in pool_value_info.keys():
+            # calc holder in every pool weight
+            holder_weight_dict = {}
+            holder_reward_dict = {}
+            pool_reward = pool_value_info[pool_name]['pool_reward']
+
+            holder_total_pool_reward_weight = Decimal(0)
+            for holder, holder_pool_reward in holder_pools_reward[pool_name].items():
+                holder_reward_percent = holder_pool_reward / pool_reward
+                holder_total_pool_reward = holder_amms_reward_dict.get(holder)
+                holder_mcb_balance = holder_mcb_balance_dict.get(holder, Decimal(0))
+                reward_factor = self._get_holder_reward_factor(holder, holder_total_pool_reward, holder_mcb_balance)
+                holder_total_pool_reward_weight += holder_reward_percent * reward_factor
+
+            for holder, holder_pool_reward in holder_pools_reward[pool_name].items():                
+                holder_mcb_balance = holder_mcb_balance_dict.get(holder, Decimal(0))
+                holder_total_pool_reward = holder_amms_reward_dict.get(holder)
+                reward_factor = self._get_holder_reward_factor(holder, reward, holder_mcb_balance)
+                holder_weight_dict[holder] = reward_factor / holder_total_pool_reward_weight
+            holder_amms_weight_dict[pool_name] = holder_weight_dict
+
+        return holder_amms_weight_dict
+
     def _calculate_pools_reward(self, block_number, pool_info, pool_reward_percent, db_session):
         pool_value_info = self._get_pool_value_info(block_number, pool_info, pool_reward_percent, db_session)
         self._logger.info(f'sync mining reward, block_number:{block_number}, pools:{",".join(pool_info.keys())}')
         
         holder_amms_weight_dict = {}
         if block_number >= self._zhou_begin_block_number: 
+            #holder_amms_weight_dict = self._get_holder_reward_weight(block_number, pool_value_info, db_session)
             holder_amms_weight_dict = self._get_holder_reward_weight(block_number, pool_value_info, db_session)
 
         for pool_name in pool_value_info.keys():
@@ -372,7 +432,7 @@ class ShareMining(SyncerInterface):
                     continue
                 # amm pool, use effective share after xia_rebalance_hard_fork block number
                 if pool_type == 'AMM' and block_number >= self._xia_rebalance_hard_fork_block_number:
-                    holder_weight = holder_amms_weight_dict.get(holder, Decimal(1))
+                    holder_weight = holder_amms_weight_dict[pool_name].get(holder, Decimal(1))
                     total_effective_share_amount = pool_value_info[pool_name]['total_effective_share_amount']
                     holder_effective_share_amount = pool_value_info[pool_name]['effective_share_dict'].get(holder, Decimal(0))
                     wad_reward = Wad.from_number(holder_weight) * pool_reward * Wad.from_number(holder_effective_share_amount) / Wad.from_number(total_effective_share_amount)
