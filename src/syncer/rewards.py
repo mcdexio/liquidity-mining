@@ -386,20 +386,13 @@ class ShareMining(SyncerInterface):
                 holder_mcb_balance = holder_mcb_balance_dict.get(holder, Decimal(0))
                 reward_factor = self._get_holder_reward_factor(holder, holder_total_pool_reward, holder_mcb_balance)
                 holder_total_pool_reward_weight += holder_reward_percent * reward_factor
-                if pool_name == 'SNX_PERP':
-                    print('######holder', holder, 'reward_factor', reward_factor, 'holder_total_pool_reward_weight', holder_total_pool_reward_weight, 'holder_reward_percent', holder_reward_percent)
 
             for holder, holder_pool_reward in holder_pools_reward[pool_name].items():                
                 holder_mcb_balance = holder_mcb_balance_dict.get(holder, Decimal(0))
                 holder_total_pool_reward = holder_amms_reward_dict.get(holder)
                 reward_factor = self._get_holder_reward_factor(holder, holder_total_pool_reward, holder_mcb_balance)
                 holder_weight_dict[holder] = reward_factor / holder_total_pool_reward_weight
-                if pool_name == 'SNX_PERP':
-                    print('######holder', holder, 'reward_factor', reward_factor, )
             holder_amms_weight_dict[pool_name] = holder_weight_dict
-
-            if pool_name == 'SNX_PERP':
-                print('######holder_weight_dict', holder_weight_dict)
 
         return holder_amms_weight_dict
 
@@ -442,8 +435,6 @@ class ShareMining(SyncerInterface):
                     holder_effective_share_amount = pool_value_info[pool_name]['effective_share_dict'].get(holder, Decimal(0))
                     wad_reward = Wad.from_number(holder_weight) * pool_reward * Wad.from_number(holder_effective_share_amount) / Wad.from_number(total_effective_share_amount)
                     reward = Decimal(str(wad_reward))
-                    if pool_name == 'SNX_PERP':
-                        print('######holder', holder, 'holder_weight', holder_weight, 'reward', reward)
                 else:
                     holder_share_token_amount = Decimal(item.balance)
                     wad_reward = pool_reward * Wad.from_number(holder_share_token_amount) / Wad.from_number(total_share_token_amount)
