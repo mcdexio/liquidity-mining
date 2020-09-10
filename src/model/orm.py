@@ -1,4 +1,4 @@
-from sqlalchemy import (DECIMAL, TIMESTAMP, Column, ForeignKey, Integer,
+from sqlalchemy import (DECIMAL, TIMESTAMP, Column, ForeignKey, Integer, Float,
                         String, Table)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -25,8 +25,8 @@ class MiningRound(Base):
     round = Column(String, primary_key=True)
     begin_block_number = Column(Integer)
     end_block_number = Column(Integer)
-    release_per_block = Column(Integer)
-    supply = Column(Integer)
+    release_per_block = Column(Float)
+    supply = Column(Float)
     watcher_id = Column(Integer, ForeignKey('watchers.id'))
 
 

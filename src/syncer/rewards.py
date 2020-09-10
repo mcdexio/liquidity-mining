@@ -35,6 +35,7 @@ class ShareMining(SyncerInterface):
         self._shang_reward_btc_pool_block_number = config.SHANG_REWARD_BTC_POOL_BLOCK_NUMBER
         self._zhou_begin_block_number = config.ZHOU_BEGIN_BLOCK_NUMBER
         self._qin_begin_block_number = config.QIN_BEGIN_BLOCK_NUMBER
+        self._qin_reduce_reward_block_number = config.QIN_REDUCE_REWARD_BLOCK_NUMBER
 
         self._logger = logging.getLogger()
 
@@ -159,6 +160,11 @@ class ShareMining(SyncerInterface):
         return amm_usd_value
 
     def _get_pool_value_info(self, block_number, pool_info, pool_reward_percent, db_session):
+        if self._mining_round == 'QIN' and block_number < self._qin_reduce_reward_block_number:
+            self._reward_per_block = 2
+        elif self._mining_round == 'QIN' and block_number >= self._qin_reduce_reward_block_number:
+            self._reward_per_block = 0.2
+
         pool_value_info = {}
         pools_total_effective_value = Wad(0)
         #for pool_name, pool_share_token_address in pool_info.items():
