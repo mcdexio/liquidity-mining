@@ -23,6 +23,20 @@
 - Begin Block: 10,727,500
 - End Block: 10,829,999
 
+### 4. QIN(秦)
+
+- Total Supply: 36,340 MCB
+- Release: 0.2 MCB / Block
+- Begin Block: 10,830,000
+- End Block: 10,932,499
+
+### 5. HAN(汉)
+
+- Total Supply: 20,500 MCB
+- Release: 0.2 MCB / Block
+- Begin Block: 10,932,500
+- End Block: 11,034,999
+  
 ## Mining Reward Distribution Rules
 
 1. The mining rewards are calculated in every block.
