@@ -95,6 +95,8 @@ def main():
     parser = argparse.ArgumentParser(
         description='MCDEX Liquidity mining: Round HAN')
 
+    parser.add_argument('--extradata', dest='extradata', metavar='EXTRA_DATA', action='store', type=str,
+                        help='sync extra data')
     parser.add_argument('--rollback', dest='rollback', metavar='SYNCED_BLOCK', action='store', type=int,
                         help='rollback the watcher to SYNCED_BLOCK')
 
