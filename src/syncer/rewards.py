@@ -173,22 +173,15 @@ class ShareMining(SyncerInterface):
             if pool_name not in pool_value_info.keys():
                 pool_value_info[pool_name] = {}
             pool_value_info[pool_name]['pool_share_token_address'] = pool_share_token_address
-
+            
+            # use for amm pools reward distribute
             amm_pool_proportion = pool_info[pool_name].get('amm_pool_proportion', 1)
             pool_value_info[pool_name]['amm_pool_proportion'] = amm_pool_proportion
 
-            """
-            if pool_name in ('ETH_PERP', 'LINK_PERP', 'BTC_PERP', 'COMP_PERP', 'LEND_PERP', 'SNX_PERP'):
-                pool_type = 'AMM'
-                pool_value_info[pool_name]['pool_type'] = pool_type
-                if pool_name == 'BTC_PERP':
-                    pool_contract_inverse = False
-                elif pool_name in ('ETH_PERP', 'LINK_PERP', 'COMP_PERP', 'LEND_PERP', 'SNX_PERP'):
-                    pool_contract_inverse = True
-            elif pool_name == 'UNISWAP_MCB_ETH':
-                pool_type = 'UNISWAP'
-                pool_value_info[pool_name]['pool_type'] = pool_type
-            """
+            # use for uniswap pools reward distribute 
+            uniswap_pool_proportion = pool_info[pool_name].get('uniswap_pool_proportion', 1)
+            pool_value_info[pool_name]['uniswap_pool_proportion'] = uniswap_pool_proportion
+
             pool_type = pool_info[pool_name].get('pool_type')
             pool_contract_inverse = pool_info[pool_name].get('pool_contract_inverse', True)
             pool_value_info[pool_name]['pool_type'] = pool_type
@@ -219,7 +212,7 @@ class ShareMining(SyncerInterface):
                 # include two case: 
                 # 1) pool_type is UNISWAP;
                 # 2) pool_type is AMM and block number before _xia_rebalance_hard_fork_block_number;
-                pool_reward = Wad.from_number(pool_reward_percent) * Wad.from_number(self._reward_per_block)
+                pool_reward = Wad.from_number(pool_reward_percent) * Wad.from_number(self._reward_per_block) * Wad.from_number(uniswap_pool_proportion)
                 pool_value_info[pool_name]['pool_reward'] = pool_reward
         
         # update AMM pool reward
@@ -471,6 +464,21 @@ class ShareMining(SyncerInterface):
                     immature_summary_item.mcb_balance += reward
                 db_session.add(immature_summary_item)
 
+    def _update_uniswap_pool_proportion(self, pool_info, db_session):
+        holder_mcb_balance_dict = self._get_holder_mcb_balance(db_session)
+        total_mcb_balance_in_uniswap_pools = Decimal(0)
+        for pool_name in pool_info.keys():
+            pool_share_token_address = pool_info[pool_name].get('pool_share_token_address')
+            holder_mcb_balance = holder_mcb_balance_dict.get(pool_share_token_address, Decimal(0))
+            total_mcb_balance_in_uniswap_pools += holder_mcb_balance
+
+        if total_mcb_balance_in_uniswap_pools != 0:
+            for pool_name in pool_info.keys():
+                pool_share_token_address = pool_info[pool_name].get('pool_share_token_address')
+                holder_mcb_balance = holder_mcb_balance_dict.get(pool_share_token_address, Decimal(0))
+                uniswap_pool_proportion = holder_mcb_balance / total_mcb_balance_in_uniswap_pools
+                pool_info[pool_name]['uniswap_pool_proportion'] = uniswap_pool_proportion
+
     def sync(self, watcher_id, block_number, block_hash, db_session):
         """Sync data"""
         if block_number < self._begin_block or block_number > self._end_block:
@@ -598,6 +606,18 @@ class ShareMining(SyncerInterface):
             uniswap_mcb_reward_percent = 0.5
             pool_reward_percent = uniswap_mcb_reward_percent
             self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)            
+        elif self._mining_round == 'HAN':
+            # AMM pools, no reward in han period
+            # UNISWAP pool
+            pool_info = {}
+            pool_info['UNISWAP_MCB_ETH'] = {'pool_share_token_address': config.UNISWAP_MCB_ETH_SHARE_TOKEN_ADDRESS.lower(),
+                                            'pool_type': 'UNISWAP'}
+            pool_info['UNISWAP_MCB_USDC'] = {'pool_share_token_address': config.UNISWAP_MCB_USDC_SHARE_TOKEN_ADDRESS.lower(),
+                                            'pool_type': 'UNISWAP'}                                            
+            self._update_uniswap_pool_proportion(pool_info, db_session)
+            uniswap_mcb_reward_percent = 1
+            pool_reward_percent = uniswap_mcb_reward_percent
+            self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)
 
     def rollback(self, watcher_id, block_number, db_session):
         """delete data after block_number"""
