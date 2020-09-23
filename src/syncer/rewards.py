@@ -164,10 +164,12 @@ class ShareMining(SyncerInterface):
             self._reward_per_block = 2
         elif self._mining_round == 'QIN' and block_number >= self._qin_reduce_reward_block_number:
             self._reward_per_block = 0.2
-
+        
+        # update uniswap_pool_proportion, every block update
+        self._update_uniswap_pool_proportion(pool_info, db_session)
+        
         pool_value_info = {}
         pools_total_effective_value = Wad(0)
-        #for pool_name, pool_share_token_address in pool_info.items():
         for pool_name in pool_info.keys():
             pool_share_token_address = pool_info[pool_name].get('pool_share_token_address')
             if pool_name not in pool_value_info.keys():
@@ -290,7 +292,6 @@ class ShareMining(SyncerInterface):
                 theory_mining_reward_item = theory_mining_reward_dict[holder]
                 theory_mining_reward_item.mcb_balance = reward
             db_session.add(theory_mining_reward_item)
-
 
     def _get_holder_reward_weight(self, block_number, pool_value_info, db_session):
         holder_amms_weight_dict = {}
@@ -468,12 +469,15 @@ class ShareMining(SyncerInterface):
         holder_mcb_balance_dict = self._get_holder_mcb_balance(db_session)
         total_mcb_balance_in_uniswap_pools = Decimal(0)
         for pool_name in pool_info.keys():
-            pool_share_token_address = pool_info[pool_name].get('pool_share_token_address')
-            holder_mcb_balance = holder_mcb_balance_dict.get(pool_share_token_address, Decimal(0))
-            total_mcb_balance_in_uniswap_pools += holder_mcb_balance
-
-        if total_mcb_balance_in_uniswap_pools != 0:
-            for pool_name in pool_info.keys():
+            pool_type = pool_info[pool_name]['pool_type']
+            if pool_type ==  'UNISWAP':
+                pool_share_token_address = pool_info[pool_name].get('pool_share_token_address')
+                holder_mcb_balance = holder_mcb_balance_dict.get(pool_share_token_address, Decimal(0))
+                total_mcb_balance_in_uniswap_pools += holder_mcb_balance
+        
+        for pool_name in pool_info.keys():
+            pool_type = pool_info[pool_name]['pool_type']
+            if pool_type ==  'UNISWAP' and total_mcb_balance_in_uniswap_pools != 0:
                 pool_share_token_address = pool_info[pool_name].get('pool_share_token_address')
                 holder_mcb_balance = holder_mcb_balance_dict.get(pool_share_token_address, Decimal(0))
                 uniswap_pool_proportion = holder_mcb_balance / total_mcb_balance_in_uniswap_pools
@@ -614,7 +618,7 @@ class ShareMining(SyncerInterface):
                                             'pool_type': 'UNISWAP'}
             pool_info['UNISWAP_MCB_USDC'] = {'pool_share_token_address': config.UNISWAP_MCB_USDC_SHARE_TOKEN_ADDRESS.lower(),
                                             'pool_type': 'UNISWAP'}                                            
-            self._update_uniswap_pool_proportion(pool_info, db_session)
+            
             uniswap_mcb_reward_percent = 1
             pool_reward_percent = uniswap_mcb_reward_percent
             self._calculate_pools_reward(block_number, pool_info, pool_reward_percent, db_session)
