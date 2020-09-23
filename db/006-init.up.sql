@@ -7,6 +7,8 @@ INSERT INTO mining_rounds (round, begin_block_number, end_block_number, supply, 
 ALTER TABLE mining_rounds ALTER COLUMN supply TYPE FLOAT;
 ALTER TABLE mining_rounds ALTER COLUMN release_per_block TYPE FLOAT;
 
+ALTER TABLE mining_rounds alter COLUMN supply TYPE double precision ;
+ALTER TABLE mining_rounds alter COLUMN release_per_block TYPE double precision;
 
 update mining_rounds set supply = 36340 where round='QIN';
 update mining_rounds set release_per_block = 0.2 where round='QIN';
