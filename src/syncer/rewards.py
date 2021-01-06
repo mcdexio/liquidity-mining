@@ -164,7 +164,9 @@ class ShareMining(SyncerInterface):
             self._reward_per_block = 2
         elif self._mining_round == 'QIN' and block_number >= self._qin_reduce_reward_block_number:
             self._reward_per_block = 0.2
-        
+        # support vote https://vote.mcdex.io/mainnet/proposal/14,  blocknumber >=11601000 && blocknumber <11685000 reward 0.1875
+        elif  block_number >= 11601000 and block_number < 11685000:
+            self._reward_per_block = 0.1875
         # update uniswap_pool_proportion, every block update
         self._update_uniswap_pool_proportion(pool_info, db_session)
         
