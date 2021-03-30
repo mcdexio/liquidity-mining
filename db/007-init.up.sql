@@ -42,4 +42,4 @@ update mining_rounds set pool_supply = '[{"name":"UNISWAP_MCB_USDC", "supply": 2
 update mining_rounds SET end_block_number=12242499  WHERE round='HAN';
 update mining_rounds SET supply = 262000  WHERE round='HAN';
 update mining_rounds SET end_time = '2021-04-15'  WHERE round='HAN';
-update mining_rounds set pool_supply = '[{"name":"UNISWAP_MCB_USDC", "supply": 245000, "type": 2},{"name":"UNISWAP_MCB_ETH", "supply": 245000, "type": 2}]' where round='HAN';
+update mining_rounds set pool_supply = '[{"name":"UNISWAP_MCB_USDC", "supply": 262000, "type": 2},{"name":"UNISWAP_MCB_ETH", "supply": 262000, "type": 2}]' where round='HAN';
